@@ -1,0 +1,39 @@
+{
+  "$schema": "https://schema.tauri.app/config/2",
+  "productName": "Morrow",
+  "version": "0.1.0",
+  "identifier": "com.morrow.desktop",
+  "build": {
+    "beforeDevCommand": "npm run dev",
+    "devUrl": "http://127.0.0.1:1420",
+    "beforeBuildCommand": "npm run build",
+    "frontendDist": "../dist"
+  },
+  "app": {
+    "windows": [
+      {
+        "title": "Morrow",
+        "label": "main",
+        "width": 760,
+        "height": 860,
+        "minWidth": 520,
+        "minHeight": 68,
+        "center": true,
+        "decorations": false,
+        "alwaysOnTop": true,
+        "resizable": true,
+        "shadow": true
+      }
+    ],
+    "security": {
+      "csp": null
+    }
+  },
+  "bundle": {
+    "active": false,
+    "targets": "all",
+    "category": "Productivity",
+    "shortDescription": "A calm desktop planner",
+    "longDescription": "Morrow helps you plan projects and tasks by day while keeping your data local."
+  }
+}
