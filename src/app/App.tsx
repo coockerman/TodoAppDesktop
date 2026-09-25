@@ -54,6 +54,13 @@ export default function App() {
     media.addEventListener("change", apply);
     return () => media.removeEventListener("change", apply);
   }, [hydrated, settings.theme]);
+  useEffect(() => {
+    const scale = settings.fontScale ?? 1;
+    document.body.style.setProperty("zoom", String(scale));
+    return () => {
+      document.body.style.removeProperty("zoom");
+    };
+  }, [settings.fontScale]);
   useEffect(() => { if (hydrated) void applyAlwaysOnTop(settings.alwaysOnTop); }, [hydrated, settings.alwaysOnTop]);
 
   if (!hydrated) return <div className="splash"><div className="brand-mark">M</div><strong>Morrow</strong><span>Đang chuẩn bị ngày mới...</span></div>;

@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { ArchiveRestore, Database, Download, Laptop, Moon, Plus, ShieldCheck, Sun, Trash2, Upload } from "lucide-react";
+import { ALargeSmall, ArchiveRestore, Database, Download, Laptop, Moon, Plus, RotateCcw, ShieldCheck, Sun, Trash2, Upload } from "lucide-react";
 import { applyAlwaysOnTop, applyAutostart } from "../../services/desktop";
 import { exportData, importDataFromFile } from "../../services/storage";
 import { useMorrowStore } from "../../stores/useMorrowStore";
@@ -33,6 +33,14 @@ export function SettingsView() {
           <header><span className="settings-icon"><Sun size={18} /></span><div><h3>Giao diện</h3><p>Chọn cách Morrow hòa vào không gian làm việc.</p></div></header>
           <div className="theme-options">
             {[{ id: "system", label: "Theo Windows", icon: Laptop }, { id: "light", label: "Sáng", icon: Sun }, { id: "dark", label: "Tối", icon: Moon }].map(({ id, label, icon: Icon }) => <button key={id} className={settings.theme === id ? "selected" : ""} onClick={() => setTheme(id as ThemeMode)}><Icon size={18} /><span>{label}</span></button>)}
+          </div>
+          <div className="font-scale-setting">
+            <div className="font-scale-label">
+              <span><ALargeSmall size={16} /><strong>Cỡ giao diện</strong></span>
+              <div><b>{Math.round((settings.fontScale ?? 1) * 100)}%</b><button className="icon-button quiet" onClick={() => updateSettings({ fontScale: 1 })} title="Đặt lại 100%"><RotateCcw size={14} /></button></div>
+            </div>
+            <div className="font-scale-slider"><small>A</small><input type="range" min="0.85" max="1.3" step="0.05" value={settings.fontScale ?? 1} onChange={(event) => updateSettings({ fontScale: Number(event.target.value) })} aria-label="Cỡ giao diện" /><strong>A</strong></div>
+            <div className="font-scale-marks"><span>Nhỏ</span><span>Mặc định</span><span>Lớn</span></div>
           </div>
         </section>
 

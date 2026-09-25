@@ -19,6 +19,7 @@ const importSchema = z.object({
   auditEvents: z.array(z.unknown()),
   settings: z.object({
     theme: z.enum(["system", "light", "dark"]),
+    fontScale: z.number().min(0.85).max(1.3).optional(),
     alwaysOnTop: z.boolean(),
     autostart: z.boolean(),
     calendarCollapsed: z.boolean(),
@@ -39,10 +40,10 @@ export async function loadData(): Promise<AppData> {
         "SELECT value_json FROM app_state WHERE key = $1 LIMIT 1",
         [STORAGE_KEY],
       );
-      if (rows[0]) return JSON.parse(rows[0].value_json) as AppData;
+      if (rows[0]) return normalizeData(JSON.parse(rows[0].value_json) as AppData);
     } else {
       const cached = localStorage.getItem(STORAGE_KEY);
-      if (cached) return JSON.parse(cached) as AppData;
+      if (cached) return normalizeData(JSON.parse(cached) as AppData);
     }
   } catch (error) {
     console.warn("Không thể đọc dữ liệu Morrow, dùng dữ liệu demo.", error);
@@ -122,12 +123,16 @@ export async function importDataFromFile(): Promise<AppData | null> {
 function parseImport(content: string): AppData {
   const parsed = JSON.parse(content) as ExportPayload;
   importSchema.parse(parsed);
-  return {
+  return normalizeData({
     projects: parsed.projects,
     tasks: parsed.tasks,
     priorities: parsed.priorities,
     statuses: parsed.statuses,
     auditEvents: parsed.auditEvents,
     settings: parsed.settings,
-  } as AppData;
+  } as AppData);
+}
+
+function normalizeData(data: AppData): AppData {
+  return { ...data, settings: { ...data.settings, fontScale: data.settings.fontScale ?? 1 } };
 }

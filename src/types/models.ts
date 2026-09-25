@@ -76,6 +76,7 @@ export interface AuditEvent {
 
 export interface AppSettings {
   theme: ThemeMode;
+  fontScale: number;
   alwaysOnTop: boolean;
   autostart: boolean;
   calendarCollapsed: boolean;
