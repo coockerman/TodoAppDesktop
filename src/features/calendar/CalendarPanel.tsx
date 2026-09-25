@@ -62,7 +62,7 @@ export function CalendarPanel() {
           const colors = [...new Set(dayTasks.map((task) => projects.find((project) => project.id === task.projectId)?.color).filter(Boolean))].slice(0, 3);
           return (
             <button
-              className={`calendar-day ${isSameDay(day, selected) ? "selected" : ""} ${!isSameMonth(day, cursor) && view === "month" ? "outside" : ""}`}
+              className={`calendar-day ${day.getDay() === 0 ? "sunday" : ""} ${isSameDay(day, selected) ? "selected" : ""} ${!isSameMonth(day, cursor) && view === "month" ? "outside" : ""}`}
               key={key}
               onClick={() => selectDate(key)}
             >
