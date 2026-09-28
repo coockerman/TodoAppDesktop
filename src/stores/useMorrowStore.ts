@@ -20,7 +20,10 @@ type AppState = AppData & {
   replaceData: (data: AppData) => void;
   selectDate: (date: string) => void;
   addTask: (projectId: string, title: string, date?: string) => void;
+  addBacklogTask: (projectId: string, title: string) => void;
   updateTask: (taskId: string, patch: Partial<Pick<Task, "title" | "notes" | "priorityId">>) => void;
+  scheduleTask: (taskId: string, date: string) => void;
+  unscheduleTask: (taskId: string) => void;
   toggleStatus: (taskId: string, statusId: string) => void;
   deleteTask: (taskId: string) => void;
   bulkMoveOpenTasks: (fromDate: string, toDate: string) => number;
@@ -33,12 +36,14 @@ type AppState = AppData & {
   addStatus: (name: string, color: string) => void;
   updateStatus: (id: string, patch: Partial<Pick<StatusDefinition, "name" | "color" | "weight">>) => void;
   deleteStatus: (id: string) => void;
+  clearAuditHistory: () => void;
+  purgeDeletedData: () => { projects: number; tasks: number; events: number };
   updateSettings: (patch: Partial<AppSettings>) => void;
 };
 
 const emptyData: AppData = {
   projects: [], tasks: [], priorities: [], statuses: [], auditEvents: [],
-  settings: { theme: "system", fontScale: 1, alwaysOnTop: true, autostart: false, calendarCollapsed: false, miniMode: false },
+  settings: { theme: "system", fontScale: 1, alwaysOnTop: true, autostart: false, calendarCollapsed: false, miniMode: false, exclusiveCompletion: false },
 };
 
 const now = () => new Date().toISOString();
@@ -94,11 +99,34 @@ export const useMorrowStore = create<AppState>((set, get) => {
       };
       return { tasks: [...state.tasks, task], auditEvents: [...state.auditEvents, audit("task", task.id, "created", null, task)] };
     }),
+    addBacklogTask: (projectId, title) => commit((state) => {
+      const createdAt = now();
+      const task: Task = {
+        id: createId("task"), projectId, title: title.trim(), notes: "", scheduledDate: null,
+        priorityId: state.priorities.find((item) => item.isDefault && !item.deletedAt)?.id ?? state.priorities[0]?.id ?? "",
+        sortOrder: state.tasks.filter((item) => item.projectId === projectId && item.scheduledDate === null).length,
+        statuses: state.statuses.filter((item) => !item.deletedAt).map((item) => ({ statusId: item.id, checked: false, checkedAt: null, updatedAt: createdAt })),
+        completedAt: null, createdAt, updatedAt: createdAt, deletedAt: null,
+      };
+      return { tasks: [...state.tasks, task], auditEvents: [...state.auditEvents, audit("task", task.id, "backlog_created", null, task)] };
+    }),
     updateTask: (taskId, patch) => commit((state) => {
       const before = state.tasks.find((item) => item.id === taskId);
       if (!before) return {};
       const after = { ...before, ...patch, updatedAt: now() };
       return { tasks: state.tasks.map((item) => item.id === taskId ? after : item), auditEvents: [...state.auditEvents, audit("task", taskId, "updated", before, after)] };
+    }),
+    scheduleTask: (taskId, date) => commit((state) => {
+      const before = state.tasks.find((item) => item.id === taskId);
+      if (!before || !date) return {};
+      const after = { ...before, scheduledDate: date, sortOrder: state.tasks.filter((item) => item.scheduledDate === date && !item.deletedAt).length, updatedAt: now() };
+      return { tasks: state.tasks.map((item) => item.id === taskId ? after : item), auditEvents: [...state.auditEvents, audit("task", taskId, before.scheduledDate ? "rescheduled" : "scheduled", before, after, { fromDate: before.scheduledDate, toDate: date })] };
+    }),
+    unscheduleTask: (taskId) => commit((state) => {
+      const before = state.tasks.find((item) => item.id === taskId);
+      if (!before || before.scheduledDate === null) return {};
+      const after = { ...before, scheduledDate: null, sortOrder: state.tasks.filter((item) => item.projectId === before.projectId && item.scheduledDate === null && !item.deletedAt).length, updatedAt: now() };
+      return { tasks: state.tasks.map((item) => item.id === taskId ? after : item), auditEvents: [...state.auditEvents, audit("task", taskId, "unscheduled", before, after, { fromDate: before.scheduledDate })] };
     }),
     toggleStatus: (taskId, statusId) => commit((state) => {
       const before = state.tasks.find((item) => item.id === taskId);
@@ -107,12 +135,14 @@ export const useMorrowStore = create<AppState>((set, get) => {
       const statuses = state.statuses.filter((item) => !item.deletedAt);
       const current = before.statuses.find((item) => item.statusId === statusId);
       const checked = !current?.checked;
+      const completion = statuses.find((item) => item.isCompletionStatus);
+      const clearOtherStatuses = checked && completion?.id === statusId && state.settings.exclusiveCompletion;
       const values = statuses.map((definition) => {
         const value = before.statuses.find((item) => item.statusId === definition.id);
         if (definition.id === statusId) return { statusId, checked, checkedAt: checked ? stamp : null, updatedAt: stamp };
+        if (clearOtherStatuses) return { statusId: definition.id, checked: false, checkedAt: null, updatedAt: stamp };
         return value ?? { statusId: definition.id, checked: false, checkedAt: null, updatedAt: stamp };
       });
-      const completion = statuses.find((item) => item.isCompletionStatus);
       const completedAt = completion?.id === statusId ? (checked ? stamp : null) : before.completedAt;
       const after = { ...before, statuses: values, completedAt, updatedAt: stamp };
       return { tasks: state.tasks.map((item) => item.id === taskId ? after : item), auditEvents: [...state.auditEvents, audit("task", taskId, checked ? "status_checked" : "status_unchecked", before, after, { statusId })] };
@@ -190,6 +220,24 @@ export const useMorrowStore = create<AppState>((set, get) => {
       const after = { ...before, deletedAt: now(), updatedAt: now() };
       return { statuses: state.statuses.map((item) => item.id === id ? after : item), auditEvents: [...state.auditEvents, audit("status", id, "deleted", before, after)] };
     }),
+    clearAuditHistory: () => commit(() => ({ auditEvents: [] })),
+    purgeDeletedData: () => {
+      const state = get();
+      const deletedProjectIds = new Set(state.projects.filter((item) => item.deletedAt).map((item) => item.id));
+      const removedTaskIds = new Set(state.tasks.filter((item) => item.deletedAt || deletedProjectIds.has(item.projectId)).map((item) => item.id));
+      const eventsToRemove = state.auditEvents.filter((event) =>
+        (event.entityType === "project" && deletedProjectIds.has(event.entityId))
+        || (event.entityType === "task" && removedTaskIds.has(event.entityId))
+      );
+      const result = { projects: deletedProjectIds.size, tasks: removedTaskIds.size, events: eventsToRemove.length };
+      if (!result.projects && !result.tasks && !result.events) return result;
+      commit((current) => ({
+        projects: current.projects.filter((item) => !deletedProjectIds.has(item.id)),
+        tasks: current.tasks.filter((item) => !removedTaskIds.has(item.id)),
+        auditEvents: current.auditEvents.filter((event) => !eventsToRemove.includes(event)),
+      }));
+      return result;
+    },
     updateSettings: (patch) => commit((state) => ({ settings: { ...state.settings, ...patch }, auditEvents: [...state.auditEvents, audit("settings", "app", "updated", state.settings, { ...state.settings, ...patch })] })),
   };
 });

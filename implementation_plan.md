@@ -333,3 +333,70 @@ UI action
 - Task chưa hoàn thành luôn ở ngày cũ cho tới khi người dùng chủ động chuyển.
 - Xóa mặc định là xóa mềm; không làm mất audit history.
 - Phase 1 chuẩn bị đầy đủ schema cho nhiều trạng thái tùy chỉnh, dù trải nghiệm quản trị nâng cao có thể hoàn thiện tiếp ở Phase 2.
+
+## 14. Kế hoạch tiếp theo — Task chưa xác định ngày (Project Backlog)
+
+### 14.1 Mục tiêu và nguyên tắc
+
+- Mỗi project có một **Backlog** chứa các task chắc chắn sẽ làm nhưng chưa chọn ngày.
+- Backlog không xuất hiện lẫn trong danh sách task của ngày, tránh làm màn lịch bị rối.
+- Task backlog vẫn có project, độ ưu tiên, ghi chú và các cột trạng thái tùy chỉnh như task đã xếp lịch.
+- Trạng thái lập lịch là thuộc tính hệ thống riêng, không biến thành một cột tick do người dùng cấu hình.
+
+### 14.2 Mô hình dữ liệu
+
+- Đổi `Task.scheduledDate` từ `string` thành `string | null`.
+- `scheduledDate = null`: task đang ở Backlog, hiển thị badge hệ thống `Chưa xếp lịch`.
+- `scheduledDate != null`: task đã được đưa vào một ngày cụ thể.
+- Giữ nguyên `statuses`, `priorityId`, `completedAt` và audit history.
+- Bổ sung event `scheduled`, `unscheduled` và `rescheduled`; metadata lưu ngày nguồn/ngày đích.
+- Task hoàn thành ngay trong Backlog vẫn được phép, nhưng mặc định ẩn khỏi danh sách mở và có bộ lọc `Đã xong`.
+
+### 14.3 Vị trí UI đề xuất
+
+Trong màn `Dự án`, mỗi project có nút gọn `Backlog · N`. Nhấn vào mở panel chi tiết ở bên phải thay vì chuyển sang một trang hoàn toàn khác:
+
+```text
+┌──────── Project cards ────────┬──────── Backlog · Fair Shot ─────────┐
+│ Fair Shot                     │ + Thêm việc chưa có ngày...          │
+│ 12 việc · Backlog 4           │                                     │
+│ [Mở backlog] [Lưu trữ]        │ ⠿ Thiết kế màn reward      Cao      │
+│                               │   [Hôm nay] [Ngày mai] [Chọn ngày]  │
+│ Personal                      │ ⠿ Tối ưu save game         Vừa      │
+│ ...                           │   [Hôm nay] [Ngày mai] [Chọn ngày]  │
+└───────────────────────────────┴─────────────────────────────────────┘
+```
+
+- Desktop rộng: side panel chiếm khoảng 40–45% chiều rộng.
+- Cửa sổ hẹp: panel mở dạng trang con toàn chiều rộng với nút quay lại.
+- Header panel có tìm kiếm, lọc ưu tiên và bộ lọc `Đang mở / Đã xong`.
+- Quick add chỉ cần nhập tên và Enter; priority mặc định được áp dụng tự động.
+
+### 14.4 Luồng xếp lịch nhanh
+
+1. Người dùng mở Backlog từ card project.
+2. Mỗi task có ba hành động trực tiếp: `Hôm nay`, `Ngày mai`, `Chọn ngày`.
+3. Khi chọn ngày, task biến mất khỏi Backlog mở và xuất hiện ngay trong project ở ngày tương ứng.
+4. Hiện toast có nút `Hoàn tác` trong vài giây để trả task về Backlog nếu chọn nhầm.
+5. Ở màn lịch, menu cạnh task có hành động `Đưa về Backlog` để bỏ ngày mà không xóa task.
+6. Phase sau có thể kéo task từ panel Backlog thả trực tiếp vào ô lịch; V1 ưu tiên nút nhanh vì chính xác và dùng tốt với cửa sổ nhỏ.
+
+### 14.5 Trạng thái và hành vi
+
+- Badge `Chưa xếp lịch` chỉ mô tả vị trí lập lịch; không cạnh tranh với `Todo`, `Done` hoặc các status do người dùng tạo.
+- Các cột trạng thái hiện tại tiếp tục hoạt động trong Backlog.
+- Nếu bật `Done là trạng thái độc quyền`, tick Done trong Backlog cũng bỏ tick các cột khác.
+- Task Done được chuyển sang nhóm thu gọn `Đã hoàn thành`; không tự động gán ngày.
+- Khi project được lưu trữ, Backlog của project cũng được lưu trữ theo và chỉ đọc/sửa trong view lưu trữ cho tới khi project được khôi phục.
+
+### 14.6 Checklist triển khai
+
+- [x] Normalize dữ liệu cũ và hỗ trợ `scheduledDate: null` trong snapshot SQLite/JSON.
+- [x] Store actions: `addBacklogTask`, `scheduleTask`, `unscheduleTask`.
+- [x] Bộ đếm backlog trên ProjectCard.
+- [x] Backlog side panel responsive, quick add và chỉnh task.
+- [x] Các nút Hôm nay/Ngày mai/Chọn ngày.
+- [x] Toast Hoàn tác sau khi xếp lịch.
+- [x] Hành động Đưa về Backlog từ task đã xếp lịch.
+- [x] Dashboard có bộ lọc `Chưa xếp lịch`, mặc định không trộn vào thống kê theo ngày.
+- [x] Unit/integration test cho schedule, unschedule và normalize dữ liệu cũ.

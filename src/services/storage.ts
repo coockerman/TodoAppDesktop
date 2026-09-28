@@ -24,6 +24,7 @@ const importSchema = z.object({
     autostart: z.boolean(),
     calendarCollapsed: z.boolean(),
     miniMode: z.boolean(),
+    exclusiveCompletion: z.boolean().optional(),
   }),
 });
 
@@ -134,5 +135,13 @@ function parseImport(content: string): AppData {
 }
 
 function normalizeData(data: AppData): AppData {
-  return { ...data, settings: { ...data.settings, fontScale: data.settings.fontScale ?? 1 } };
+  return {
+    ...data,
+    tasks: data.tasks.map((task) => ({ ...task, scheduledDate: task.scheduledDate ?? null })),
+    settings: {
+      ...data.settings,
+      fontScale: data.settings.fontScale ?? 1,
+      exclusiveCompletion: data.settings.exclusiveCompletion ?? false,
+    },
+  };
 }

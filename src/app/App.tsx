@@ -76,7 +76,22 @@ export default function App() {
       <header className="titlebar" data-tauri-drag-region onMouseDown={drag}>
         <button className="brand" onClick={() => setView("calendar")}><span className="brand-mark">M</span><span><strong>Morrow</strong><small>Make room for tomorrow</small></span></button>
         <nav>
-          {nav.map(({ id, label, icon: Icon }) => <button key={id} className={view === id ? "active" : ""} onClick={() => setView(id)}><Icon size={16} /><span>{label}</span></button>)}
+          {nav.map(({ id, label, icon: Icon }) => {
+            const isActive = view === id;
+            return (
+              <button
+                key={id}
+                className={isActive ? "active" : ""}
+                onClick={() => setView(id)}
+                aria-label={label}
+                aria-current={isActive ? "page" : undefined}
+                title={label}
+              >
+                <Icon size={16} />
+                {isActive && <span>{label}</span>}
+              </button>
+            );
+          })}
         </nav>
         <div className="title-actions">
           <button className="soft-button compact" onClick={collapse}><ChevronUp size={15} /> Thu gọn</button>

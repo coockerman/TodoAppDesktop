@@ -51,7 +51,7 @@ export interface Task {
   projectId: string;
   title: string;
   notes: string;
-  scheduledDate: string;
+  scheduledDate: string | null;
   priorityId: string;
   sortOrder: number;
   statuses: TaskStatusValue[];
@@ -81,6 +81,7 @@ export interface AppSettings {
   autostart: boolean;
   calendarCollapsed: boolean;
   miniMode: boolean;
+  exclusiveCompletion: boolean;
 }
 
 export interface AppData {

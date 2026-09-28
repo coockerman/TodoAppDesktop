@@ -52,6 +52,6 @@ export function createSeedData(): AppData {
     priorities: defaultPriorities,
     statuses: defaultStatuses,
     auditEvents: [],
-    settings: { theme: "system", fontScale: 1, alwaysOnTop: true, autostart: false, calendarCollapsed: false, miniMode: false },
+    settings: { theme: "system", fontScale: 1, alwaysOnTop: true, autostart: false, calendarCollapsed: false, miniMode: false, exclusiveCompletion: false },
   };
 }
