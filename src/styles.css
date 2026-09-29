@@ -114,6 +114,7 @@ input, textarea, select { outline: none; }
 .task-panel-header h2 { margin: 0; font-size: 17px; letter-spacing: -.35px; }
 .project-picker-wrap { position: relative; }
 .project-picker-menu { position: absolute; z-index: 30; right: 0; bottom: calc(100% + 7px); width: 230px; padding: 7px; border: 1px solid var(--border-strong); border-radius: 11px; background: var(--surface); box-shadow: 0 16px 38px rgba(18, 16, 30, .24); }
+.project-picker-menu.add-project-menu { top: calc(100% + 7px); bottom: auto; }
 .project-picker-title { display: block; padding: 5px 7px 7px; color: var(--faint); font-size: 8px; font-weight: 700; letter-spacing: .06em; text-transform: uppercase; }
 .project-picker-menu > button { display: grid; grid-template-columns: auto 1fr auto; align-items: center; gap: 9px; width: 100%; min-height: 36px; padding: 7px 8px; border: 0; border-radius: 8px; background: transparent; color: var(--text); font-size: var(--content-control); text-align: left; }
 .project-picker-menu > button:hover { background: var(--surface-soft); color: var(--accent); }

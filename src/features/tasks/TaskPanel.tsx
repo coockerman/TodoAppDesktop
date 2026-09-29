@@ -117,7 +117,7 @@ export function TaskPanel({ onManageProjects }: { onManageProjects: () => void }
           <div className="project-picker-wrap">
             <button className="primary-button" onClick={() => { setProjectPickerOpen((open) => !open); setBacklogPickerOpen(false); }}><FolderPlus size={16} /> Thêm dự án <ChevronDown size={14} /></button>
             {projectPickerOpen && (
-              <div className="project-picker-menu">
+              <div className="project-picker-menu add-project-menu">
                 <span className="project-picker-title">Thêm dự án vào ngày này</span>
                 {availableProjects.map((project) => <button key={project.id} onClick={() => revealProject(project.id)}><span className="project-dot" style={{ background: project.color }} /><span>{project.name}</span><CirclePlus size={15} /></button>)}
                 {!availableProjects.length && <p>Mọi dự án đang hoạt động đã có trong ngày.</p>}
