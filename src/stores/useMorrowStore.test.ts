@@ -69,4 +69,19 @@ describe("Morrow task workflow", () => {
     expect(useMorrowStore.getState().tasks.find((task) => task.id === backlogTask.id)?.scheduledDate).toBeNull();
     expect(useMorrowStore.getState().auditEvents.at(-1)?.eventType).toBe("unscheduled");
   });
+
+  it("swaps task order only inside the same project and day", () => {
+    useMorrowStore.getState().addTask("project-morrow", "Việc thứ nhất", "2026-09-25");
+    useMorrowStore.getState().addTask("project-morrow", "Việc thứ hai", "2026-09-25");
+    const state = useMorrowStore.getState();
+    const projectTasks = state.tasks.filter((task) => task.projectId === "project-morrow" && task.scheduledDate === "2026-09-25" && !task.deletedAt);
+    const [first, second] = projectTasks.sort((a, b) => a.sortOrder - b.sortOrder);
+
+    state.reorderTask(first.id, second.id);
+
+    const reordered = useMorrowStore.getState();
+    expect(reordered.tasks.find((task) => task.id === first.id)?.sortOrder).toBe(second.sortOrder);
+    expect(reordered.tasks.find((task) => task.id === second.id)?.sortOrder).toBe(first.sortOrder);
+    expect(reordered.auditEvents.at(-1)?.eventType).toBe("reordered");
+  });
 });

@@ -24,6 +24,7 @@ type AppState = AppData & {
   updateTask: (taskId: string, patch: Partial<Pick<Task, "title" | "notes" | "priorityId">>) => void;
   scheduleTask: (taskId: string, date: string) => void;
   unscheduleTask: (taskId: string) => void;
+  reorderTask: (taskId: string, targetTaskId: string) => void;
   toggleStatus: (taskId: string, statusId: string) => void;
   deleteTask: (taskId: string) => void;
   bulkMoveOpenTasks: (fromDate: string, toDate: string) => number;
@@ -127,6 +128,19 @@ export const useMorrowStore = create<AppState>((set, get) => {
       if (!before || before.scheduledDate === null) return {};
       const after = { ...before, scheduledDate: null, sortOrder: state.tasks.filter((item) => item.projectId === before.projectId && item.scheduledDate === null && !item.deletedAt).length, updatedAt: now() };
       return { tasks: state.tasks.map((item) => item.id === taskId ? after : item), auditEvents: [...state.auditEvents, audit("task", taskId, "unscheduled", before, after, { fromDate: before.scheduledDate })] };
+    }),
+    reorderTask: (taskId, targetTaskId) => commit((state) => {
+      if (taskId === targetTaskId) return {};
+      const before = state.tasks.find((item) => item.id === taskId);
+      const target = state.tasks.find((item) => item.id === targetTaskId);
+      if (!before || !target || before.deletedAt || target.deletedAt || before.projectId !== target.projectId || before.scheduledDate !== target.scheduledDate) return {};
+      const stamp = now();
+      const after = { ...before, sortOrder: target.sortOrder, updatedAt: stamp };
+      const targetAfter = { ...target, sortOrder: before.sortOrder, updatedAt: stamp };
+      return {
+        tasks: state.tasks.map((item) => item.id === taskId ? after : item.id === targetTaskId ? targetAfter : item),
+        auditEvents: [...state.auditEvents, audit("task", taskId, "reordered", before, after, { targetTaskId })],
+      };
     }),
     toggleStatus: (taskId, statusId) => commit((state) => {
       const before = state.tasks.find((item) => item.id === taskId);

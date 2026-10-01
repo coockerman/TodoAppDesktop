@@ -1,10 +1,20 @@
 import { useMemo, useState } from "react";
 import { endOfMonth, endOfWeek, format, isBefore, parseISO, startOfMonth, startOfToday, startOfWeek } from "date-fns";
-import { CalendarDays, Search, SlidersHorizontal } from "lucide-react";
+import { CalendarDays, Check, Search, SlidersHorizontal } from "lucide-react";
 import { useMorrowStore } from "../../stores/useMorrowStore";
 import type { Task } from "../../types/models";
 
 type Range = "week" | "month" | "all" | "backlog";
+
+function formatCompletedAt(value: string) {
+  return new Intl.DateTimeFormat("vi-VN", {
+    hour: "2-digit",
+    minute: "2-digit",
+    day: "2-digit",
+    month: "2-digit",
+    year: "numeric",
+  }).format(new Date(value));
+}
 
 export function DashboardView() {
   const { projects, tasks, priorities } = useMorrowStore();
@@ -60,7 +70,13 @@ export function DashboardView() {
               {dayTasks.map((task) => {
                 const project = projects.find((item) => item.id === task.projectId);
                 const priority = priorities.find((item) => item.id === task.priorityId);
-                return <div className={`dashboard-task ${task.completedAt ? "completed" : ""}`} key={task.id}><span className="project-dot" style={{ background: project?.color }} /><div><strong>{task.title}</strong><span>{project?.name}</span></div><span className="priority-pill" style={{ color: priority?.color, background: `${priority?.color}18` }}>{priority?.name}</span></div>;
+                return <div className={`dashboard-task ${task.completedAt ? "completed" : ""}`} key={task.id}>
+                  {task.completedAt
+                    ? <span className="completion-mark has-completion-tooltip" tabIndex={0} aria-label={`Hoàn thành lúc ${formatCompletedAt(task.completedAt)}`} data-completed-label={`Hoàn thành lúc ${formatCompletedAt(task.completedAt)}`}><Check size={11} strokeWidth={3} /></span>
+                    : <span className="project-dot" style={{ background: project?.color }} />}
+                  <div><strong>{task.title}</strong><span>{project?.name}</span></div>
+                  <span className="priority-pill" style={{ color: priority?.color, background: `${priority?.color}18` }}>{priority?.name}</span>
+                </div>;
               })}
             </div>
           </div>

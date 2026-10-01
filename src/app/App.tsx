@@ -22,7 +22,7 @@ function MiniBar() {
   const todayTasks = tasks.filter((task) => task.scheduledDate === selectedDate && !task.deletedAt);
   const done = todayTasks.filter((task) => task.completedAt).length;
   const percent = todayTasks.length ? Math.round(done / todayTasks.length * 100) : 0;
-  const expand = () => { updateSettings({ miniMode: false }); void applyMiniMode(false); };
+  const expand = () => updateSettings({ miniMode: false });
   const drag = (event: React.MouseEvent<HTMLElement>) => {
     if (event.button === 0 && !(event.target as HTMLElement).closest("button, input, select, textarea")) void startWindowDragging();
   };
@@ -62,11 +62,12 @@ export default function App() {
     };
   }, [settings.fontScale]);
   useEffect(() => { if (hydrated) void applyAlwaysOnTop(settings.alwaysOnTop); }, [hydrated, settings.alwaysOnTop]);
+  useEffect(() => { if (hydrated) void applyMiniMode(settings.miniMode); }, [hydrated, settings.miniMode]);
 
   if (!hydrated) return <div className="splash"><div className="brand-mark">M</div><strong>Morrow</strong><span>Đang chuẩn bị ngày mới...</span></div>;
   if (settings.miniMode) return <MiniBar />;
 
-  const collapse = () => { updateSettings({ miniMode: true }); void applyMiniMode(true); };
+  const collapse = () => updateSettings({ miniMode: true });
   const drag = (event: React.MouseEvent<HTMLElement>) => {
     if (event.button === 0 && !(event.target as HTMLElement).closest("button, input, select, textarea")) void startWindowDragging();
   };
@@ -94,7 +95,7 @@ export default function App() {
           })}
         </nav>
         <div className="title-actions">
-          <button className="soft-button compact" onClick={collapse}><ChevronUp size={15} /> Thu gọn</button>
+          <button className="soft-button compact titlebar-collapse" onClick={collapse} aria-label="Thu gọn"><ChevronUp size={15} /><span>Thu gọn</span></button>
           <WindowControls />
         </div>
       </header>

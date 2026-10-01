@@ -22,10 +22,23 @@ function QuickAdd({ project }: { project: Project }) {
   );
 }
 
+function formatCompletedAt(value: string) {
+  return new Intl.DateTimeFormat("vi-VN", {
+    hour: "2-digit",
+    minute: "2-digit",
+    day: "2-digit",
+    month: "2-digit",
+    year: "numeric",
+  }).format(new Date(value));
+}
+
 function TaskRow({ task }: { task: Task }) {
-  const { priorities, statuses, toggleStatus, updateTask, unscheduleTask, deleteTask } = useMorrowStore();
+  const { priorities, statuses, reorderTask, toggleStatus, updateTask, unscheduleTask, deleteTask } = useMorrowStore();
   const [title, setTitle] = useState(task.title);
+  const [dragging, setDragging] = useState(false);
+  const [dragOver, setDragOver] = useState(false);
   const activeStatuses = statuses.filter((item) => !item.deletedAt).sort((a, b) => a.weight - b.weight);
+  const completionStatus = activeStatuses.find((item) => item.isCompletionStatus);
   const priority = priorities.find((item) => item.id === task.priorityId);
   useEffect(() => setTitle(task.title), [task.title]);
   const saveTitle = () => {
@@ -34,10 +47,24 @@ function TaskRow({ task }: { task: Task }) {
     if (nextTitle !== task.title) updateTask(task.id, { title: nextTitle });
   };
   return (
-    <div className={`task-row ${task.completedAt ? "completed" : ""}`}>
+    <div
+      className={`task-row ${task.completedAt ? "completed" : ""} ${dragging ? "dragging" : ""} ${dragOver ? "drag-over" : ""}`}
+      style={{ "--completion-color": completionStatus?.color ?? "#38c976" } as React.CSSProperties}
+      onDragEnter={(event) => { event.preventDefault(); if (!dragging) setDragOver(true); }}
+      onDragOver={(event) => { event.preventDefault(); event.dataTransfer.dropEffect = "move"; if (!dragging) setDragOver(true); }}
+      onDragLeave={() => setDragOver(false)}
+      onDrop={(event) => { event.preventDefault(); setDragOver(false); reorderTask(event.dataTransfer.getData("text/plain"), task.id); }}
+    >
       <div className="task-name-wrap">
-        <span className="task-grip"><MoreHorizontal size={15} /></span>
-        <input className="task-title-input" value={title} onChange={(event) => setTitle(event.target.value)} onBlur={saveTitle} onKeyDown={(event) => { if (event.key === "Enter") event.currentTarget.blur(); }} aria-label="Tên công việc" />
+        <span
+          className="task-grip"
+          draggable
+          title="Giữ và kéo để đổi vị trí"
+          onMouseDown={(event) => event.stopPropagation()}
+          onDragStart={(event) => { event.dataTransfer.effectAllowed = "move"; event.dataTransfer.setData("text/plain", task.id); setDragging(true); }}
+          onDragEnd={() => { setDragging(false); setDragOver(false); }}
+        ><MoreHorizontal size={15} /></span>
+        <input className="task-title-input" value={title} onChange={(event) => setTitle(event.target.value)} onBlur={saveTitle} onKeyDown={(event) => { if (event.key === "Enter") event.currentTarget.blur(); }} aria-label="Tên công việc" title={task.completedAt ? `Hoàn thành lúc ${formatCompletedAt(task.completedAt)}` : undefined} />
       </div>
       <select className="priority-select" value={task.priorityId} onChange={(event) => updateTask(task.id, { priorityId: event.target.value })} style={{ color: priority?.color }} aria-label="Độ ưu tiên">
         {priorities.filter((item) => !item.deletedAt).sort((a, b) => a.weight - b.weight).map((item) => <option value={item.id} key={item.id} style={{ color: item.color, backgroundColor: "var(--surface)" }}>{item.name}</option>)}
@@ -45,7 +72,14 @@ function TaskRow({ task }: { task: Task }) {
       <div className="status-cells">
         {activeStatuses.map((status) => {
           const checked = task.statuses.find((item) => item.statusId === status.id)?.checked ?? false;
-          return <button key={status.id} className={`status-check ${checked ? "checked" : ""}`} title={status.name} onClick={() => toggleStatus(task.id, status.id)} style={{ "--status-color": status.color } as React.CSSProperties}>{checked && <Check size={14} />}</button>;
+          return <button
+            key={status.id}
+            className={`status-check ${checked ? "checked" : ""}`}
+            title={status.name}
+            aria-label={status.name}
+            onClick={() => toggleStatus(task.id, status.id)}
+            style={{ "--status-color": status.color } as React.CSSProperties}
+          >{checked && <Check size={14} />}</button>;
         })}
       </div>
       <div className="task-actions"><button className="unschedule-task" onClick={() => unscheduleTask(task.id)} title="Đưa về Backlog"><CalendarX size={14} /></button><button className="delete-task" onClick={() => deleteTask(task.id)} title="Xóa công việc"><Trash2 size={15} /></button></div>
