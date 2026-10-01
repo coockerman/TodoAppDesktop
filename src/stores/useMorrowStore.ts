@@ -47,7 +47,7 @@ type AppState = AppData & {
 
 const emptyData: AppData = {
   procedures: [], projects: [], tasks: [], priorities: [], statuses: [], auditEvents: [],
-  settings: { theme: "system", fontScale: 1, alwaysOnTop: true, autostart: false, calendarCollapsed: false, miniMode: false, exclusiveCompletion: false },
+  settings: { theme: "system", fontScale: 1, alwaysOnTop: true, autostart: false, calendarCollapsed: false, miniMode: false, exclusiveCompletion: false, onboardingCompleted: false },
 };
 
 const now = () => new Date().toISOString();

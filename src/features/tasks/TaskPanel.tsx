@@ -164,7 +164,7 @@ export function TaskPanel({ onManageProjects }: { onManageProjects: () => void }
         </div>
       </header>
 
-      {dayTasks.length === 0 && activeProjects.length === 0 && <EmptyState icon={ListTodo} title="Một ngày thật nhẹ" body="Tạo dự án đầu tiên rồi thêm công việc bạn muốn hoàn thành." />}
+      {dayTasks.length === 0 && activeProjects.length === 0 && <div className="empty-day"><EmptyState icon={ListTodo} title="Một ngày thật nhẹ" body="Tạo dự án đầu tiên rồi thêm công việc bạn muốn hoàn thành." /><button className="primary-button" onClick={onManageProjects}><FolderPlus size={16} />Tạo dự án đầu tiên</button></div>}
 
       <div className="project-task-list">
         {activeProjects.map((project) => {

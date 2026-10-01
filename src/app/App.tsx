@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { BarChart3, CalendarDays, ListChecks, ChevronDown, ChevronUp, FolderKanban, LayoutDashboard, Settings } from "lucide-react";
+import { WelcomeGuide } from "../features/onboarding/WelcomeGuide";
 import { WindowControls } from "../components/WindowControls";
 import { CalendarPanel } from "../features/calendar/CalendarPanel";
 import { DashboardView } from "../features/dashboard/DashboardView";
@@ -43,6 +44,7 @@ function MiniBar() {
 }
 
 export default function App() {
+  const [guideRequested, setGuideRequested] = useState(false);
   const [view, setView] = useState<AppView>("calendar");
   const { hydrated, hydrate, settings, updateSettings } = useMorrowStore();
 
@@ -69,13 +71,19 @@ export default function App() {
   if (!hydrated) return <div className="splash"><div className="brand-mark">M</div><strong>Morrow</strong><span>Đang chuẩn bị ngày mới...</span></div>;
   if (settings.miniMode) return <MiniBar />;
 
+  const showGuide = guideRequested || !settings.onboardingCompleted;
+  const closeGuide = () => {
+    if (!settings.onboardingCompleted) updateSettings({ onboardingCompleted: true });
+    setGuideRequested(false);
+  };
   const collapse = () => updateSettings({ miniMode: true });
   const drag = (event: React.MouseEvent<HTMLElement>) => {
     if (event.button === 0 && !(event.target as HTMLElement).closest("button, input, select, textarea")) void startWindowDragging();
   };
 
   return (
-    <div className="app-shell">
+    <>
+    <div className="app-shell" inert={showGuide}>
       <header className="titlebar" data-tauri-drag-region onMouseDown={drag}>
         <button className="brand" onClick={() => setView("calendar")}><span className="brand-mark">M</span><span><strong>Morrow</strong><small>Make room for tomorrow</small></span></button>
         <nav>
@@ -106,9 +114,11 @@ export default function App() {
       {view === "dashboard" && <DashboardView />}
       {view === "projects" && <ProjectsView />}
       {view === "procedures" && <ProceduresView />}
-      {view === "settings" && <SettingsView />}
+      {view === "settings" && <SettingsView onShowGuide={() => setGuideRequested(true)} />}
 
       <footer className="app-footer"><span><BarChart3 size={13} /> Morrow lưu dữ liệu an toàn trên máy của bạn</span><span>v0.1 · Local-first</span></footer>
     </div>
+    {showGuide && <WelcomeGuide onClose={closeGuide} onStart={() => { closeGuide(); if (!useMorrowStore.getState().projects.some((project) => !project.deletedAt)) setView("projects"); }} />}
+    </>
   );
 }

@@ -4,6 +4,7 @@ Morrow là ứng dụng desktop quản lý dự án và công việc theo ngày.
 
 ## Tính năng V1
 
+- Hướng dẫn 4 bước có minh họa ở lần đầu; xem lại trong Cài đặt. Bắt đầu với dữ liệu trống.
 - Lịch tuần/tháng, chọn ngày và ẩn riêng vùng lịch.
 - Quản lý dự án, màu nhận diện và nhập nhanh công việc bằng Enter liên tục.
 - Bộ quy trình dùng lại: checkbox tự lưu, sửa bước, đổi thứ tự, nhân bản, dán nhiều dòng và reset/xóa có hoàn tác.
@@ -69,6 +70,6 @@ Dữ liệu nằm riêng trên từng máy; dùng Xuất/Nhập JSON nếu muố
 src/features/       Màn hình và nghiệp vụ theo tính năng
 src/stores/         State và các hành động có audit
 src/services/       SQLite, import/export và tích hợp desktop
-src/data/           Dữ liệu demo lần chạy đầu
+src/data/           Trạng thái và mức ưu tiên mặc định
 src-tauri/          Native shell, capabilities và migration SQLite
 ```

@@ -82,6 +82,7 @@ export interface AppSettings {
   calendarCollapsed: boolean;
   miniMode: boolean;
   exclusiveCompletion: boolean;
+  onboardingCompleted: boolean;
 }
 
 export interface ProcedureStep {

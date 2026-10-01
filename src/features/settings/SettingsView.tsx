@@ -11,7 +11,7 @@ function Toggle({ checked, onChange }: { checked: boolean; onChange: (checked: b
   return <button className={`toggle ${checked ? "on" : ""}`} role="switch" aria-checked={checked} onClick={() => onChange(!checked)}><i /></button>;
 }
 
-export function SettingsView() {
+export function SettingsView({ onShowGuide }: { onShowGuide: () => void }) {
   const store = useMorrowStore();
   const { settings, priorities, statuses, auditEvents, updateSettings, addPriority, updatePriority, deletePriority, addStatus, updateStatus, deleteStatus, replaceData, clearAuditHistory, purgeDeletedData } = store;
   const [priorityName, setPriorityName] = useState("");
@@ -51,6 +51,10 @@ export function SettingsView() {
       <div className="view-title-row"><div><span className="eyebrow">Cá nhân hóa Morrow</span><h1>Cài đặt</h1></div>{message && <span className="settings-message">{message}</span>}</div>
 
       <div className="settings-layout">
+        <section className="settings-card wide">
+          <header><span className="settings-icon"><ShieldCheck size={18} /></span><div><h3>Làm quen với Morrow</h3><p>4 bước ngắn để tạo dự án, nhập việc và dùng checklist quy trình.</p></div></header>
+          <button className="soft-button" onClick={onShowGuide}>Xem lại hướng dẫn</button>
+        </section>
         <section className="settings-card">
           <header><span className="settings-icon"><Sun size={18} /></span><div><h3>Giao diện</h3><p>Chọn cách Morrow hòa vào không gian làm việc.</p></div></header>
           <div className="theme-options">

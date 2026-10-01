@@ -1,6 +1,6 @@
 import { cleanup, fireEvent, render, screen } from "@testing-library/react";
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
-import { createSeedData } from "../../data/seed";
+import { createDemoData as createSeedData } from "../../test/fixtures";
 import { useMorrowStore } from "../../stores/useMorrowStore";
 import { TaskPanel } from "./TaskPanel";
 

@@ -43,7 +43,19 @@
         "silent": true
       },
       "nsis": {
-        "installMode": "currentUser"
+        "installMode": "currentUser",
+        "installerIcon": "icons/icon.ico",
+        "uninstallerIcon": "icons/icon.ico",
+        "headerImage": "installer/header.bmp",
+        "sidebarImage": "installer/sidebar.bmp",
+        "languages": [
+          "Vietnamese"
+        ],
+        "displayLanguageSelector": false,
+        "customLanguageFiles": {
+          "Vietnamese": "installer/Vietnamese.nsh"
+        },
+        "installerHooks": "installer/branding.nsh"
       }
     }
   }

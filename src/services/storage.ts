@@ -30,6 +30,7 @@ const importSchema = z.object({
     calendarCollapsed: z.boolean(),
     miniMode: z.boolean(),
     exclusiveCompletion: z.boolean().optional(),
+    onboardingCompleted: z.boolean().optional(),
   }),
 });
 
@@ -52,7 +53,7 @@ export async function loadData(): Promise<AppData> {
       if (cached) return normalizeData(JSON.parse(cached) as AppData);
     }
   } catch (error) {
-    console.warn("Không thể đọc dữ liệu Morrow, dùng dữ liệu demo.", error);
+    console.warn("Không thể đọc dữ liệu Morrow.", error);
   }
 
   const seed = createSeedData();
@@ -149,6 +150,7 @@ function normalizeData(data: AppData): AppData {
       ...data.settings,
       fontScale: data.settings.fontScale ?? 1,
       exclusiveCompletion: data.settings.exclusiveCompletion ?? false,
+      onboardingCompleted: data.settings.onboardingCompleted ?? true,
     },
   };
 }

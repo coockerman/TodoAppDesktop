@@ -1,5 +1,5 @@
 import { beforeEach, describe, expect, it } from "vitest";
-import { createSeedData } from "../data/seed";
+import { createDemoData as createSeedData } from "../test/fixtures";
 import { useMorrowStore } from "./useMorrowStore";
 
 describe("Morrow task workflow", () => {
