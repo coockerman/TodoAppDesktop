@@ -8,12 +8,15 @@ import type {
   AuditEvent,
   PriorityDefinition,
   Project,
+  Procedure,
   StatusDefinition,
   Task,
 } from "../types/models";
 
 type EntityType = AuditEvent["entityType"];
 type AppState = AppData & {
+  addProcedure: (name: string, sourceId?: string) => string;
+  updateProcedure: (id: string, patch: Partial<Pick<Procedure, "name" | "steps" | "deletedAt">>, eventType?: string) => void;
   hydrated: boolean;
   selectedDate: string;
   hydrate: () => Promise<void>;
@@ -43,7 +46,7 @@ type AppState = AppData & {
 };
 
 const emptyData: AppData = {
-  projects: [], tasks: [], priorities: [], statuses: [], auditEvents: [],
+  procedures: [], projects: [], tasks: [], priorities: [], statuses: [], auditEvents: [],
   settings: { theme: "system", fontScale: 1, alwaysOnTop: true, autostart: false, calendarCollapsed: false, miniMode: false, exclusiveCompletion: false },
 };
 
@@ -56,6 +59,7 @@ let persistChain = Promise.resolve();
 let hydrationPromise: Promise<AppData> | null = null;
 const save = (state: AppState) => {
   const data: AppData = {
+    procedures: state.procedures,
     projects: state.projects,
     tasks: state.tasks,
     priorities: state.priorities,
@@ -86,6 +90,23 @@ export const useMorrowStore = create<AppState>((set, get) => {
       set({ ...data, auditEvents: [...data.auditEvents, event], hydrated: true });
       save(get());
     },
+    addProcedure: (name, sourceId) => {
+      if (!name.trim()) return "";
+      const id = createId("procedure");
+      commit((state) => {
+        const stamp = now();
+        const source = state.procedures.find((item) => item.id === sourceId && !item.deletedAt);
+        const procedure: Procedure = { id, name: name.trim(), steps: source?.steps.map((step) => ({ ...step, id: createId("step"), checked: false })) ?? [], createdAt: stamp, updatedAt: stamp, deletedAt: null };
+        return { procedures: [...state.procedures, procedure], auditEvents: [...state.auditEvents, audit("procedure", id, source ? "duplicated" : "created", null, procedure)] };
+      });
+      return id;
+    },
+    updateProcedure: (id, patch, eventType = "updated") => commit((state) => {
+      const before = state.procedures.find((item) => item.id === id);
+      if (!before || (patch.name !== undefined && !patch.name.trim())) return {};
+      const after = { ...before, ...patch, ...(patch.name !== undefined ? { name: patch.name.trim() } : {}), updatedAt: now() };
+      return { procedures: state.procedures.map((item) => item.id === id ? after : item), auditEvents: [...state.auditEvents, audit("procedure", id, eventType, before, after)] };
+    }),
     selectDate: (selectedDate) => set({ selectedDate }),
 
     addTask: (projectId, title, date) => commit((state) => {

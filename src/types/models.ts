@@ -1,6 +1,6 @@
 export type ThemeMode = "system" | "light" | "dark";
 export type CalendarView = "week" | "month";
-export type AppView = "calendar" | "dashboard" | "projects" | "settings";
+export type AppView = "calendar" | "dashboard" | "projects" | "procedures" | "settings";
 
 export interface Project {
   id: string;
@@ -63,7 +63,7 @@ export interface Task {
 
 export interface AuditEvent {
   id: string;
-  entityType: "task" | "project" | "priority" | "status" | "settings" | "import";
+  entityType: "task" | "project" | "priority" | "status" | "settings" | "import" | "procedure";
   entityId: string;
   eventType: string;
   occurredAt: string;
@@ -84,7 +84,23 @@ export interface AppSettings {
   exclusiveCompletion: boolean;
 }
 
+export interface ProcedureStep {
+  id: string;
+  title: string;
+  checked: boolean;
+}
+
+export interface Procedure {
+  id: string;
+  name: string;
+  steps: ProcedureStep[];
+  createdAt: string;
+  updatedAt: string;
+  deletedAt: string | null;
+}
+
 export interface AppData {
+  procedures: Procedure[];
   projects: Project[];
   tasks: Task[];
   priorities: PriorityDefinition[];

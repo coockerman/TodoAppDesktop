@@ -5,7 +5,8 @@ Morrow là ứng dụng desktop quản lý dự án và công việc theo ngày.
 ## Tính năng V1
 
 - Lịch tuần/tháng, chọn ngày và ẩn riêng vùng lịch.
-- Quản lý dự án, màu nhận diện và nhập nhanh công việc.
+- Quản lý dự án, màu nhận diện và nhập nhanh công việc bằng Enter liên tục.
+- Bộ quy trình dùng lại: checkbox tự lưu, sửa bước, đổi thứ tự, nhân bản, dán nhiều dòng và reset/xóa có hoàn tác.
 - Nhiều cột trạng thái, độ ưu tiên tùy chỉnh và audit history.
 - Chuyển hàng loạt công việc chưa hoàn thành sang ngày khác.
 - Dashboard lọc theo tuần, tháng, dự án và tìm kiếm.

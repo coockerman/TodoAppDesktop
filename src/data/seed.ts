@@ -47,6 +47,7 @@ export function createSeedData(): AppData {
   ];
 
   return {
+    procedures: [],
     projects,
     tasks,
     priorities: defaultPriorities,

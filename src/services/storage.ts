@@ -12,6 +12,11 @@ let database: Database | null = null;
 const importSchema = z.object({
   schemaVersion: z.literal(1),
   app: z.literal("Morrow"),
+  procedures: z.array(z.object({
+    id: z.string(), name: z.string(),
+    steps: z.array(z.object({ id: z.string(), title: z.string(), checked: z.boolean() })),
+    createdAt: z.string(), updatedAt: z.string(), deletedAt: z.string().nullable(),
+  })).optional(),
   projects: z.array(z.unknown()),
   tasks: z.array(z.unknown()),
   priorities: z.array(z.unknown()),
@@ -121,10 +126,11 @@ export async function importDataFromFile(): Promise<AppData | null> {
   });
 }
 
-function parseImport(content: string): AppData {
+export function parseImport(content: string): AppData {
   const parsed = JSON.parse(content) as ExportPayload;
   importSchema.parse(parsed);
   return normalizeData({
+    procedures: parsed.procedures ?? [],
     projects: parsed.projects,
     tasks: parsed.tasks,
     priorities: parsed.priorities,
@@ -137,6 +143,7 @@ function parseImport(content: string): AppData {
 function normalizeData(data: AppData): AppData {
   return {
     ...data,
+    procedures: data.procedures ?? [],
     tasks: data.tasks.map((task) => ({ ...task, scheduledDate: task.scheduledDate ?? null })),
     settings: {
       ...data.settings,

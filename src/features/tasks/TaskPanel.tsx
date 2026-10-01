@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { ArrowRight, CalendarPlus, CalendarX, Check, ChevronDown, CirclePlus, FolderPlus, ListTodo, MoreHorizontal, Settings, Trash2, X } from "lucide-react";
 import { formatFullDate, parseDateKey } from "../../lib/date";
 import { useMorrowStore } from "../../stores/useMorrowStore";
@@ -7,16 +7,18 @@ import { EmptyState } from "../../components/EmptyState";
 
 function QuickAdd({ project }: { project: Project }) {
   const [title, setTitle] = useState("");
+  const inputRef = useRef<HTMLInputElement>(null);
   const addTask = useMorrowStore((state) => state.addTask);
   const submit = () => {
     if (!title.trim()) return;
     addTask(project.id, title);
     setTitle("");
+    inputRef.current?.focus();
   };
   return (
     <div className="quick-add">
       <CirclePlus size={16} style={{ color: project.color }} />
-      <input value={title} onChange={(event) => setTitle(event.target.value)} onKeyDown={(event) => event.key === "Enter" && submit()} placeholder="Thêm nhanh công việc..." aria-label={`Thêm việc vào ${project.name}`} />
+      <input ref={inputRef} autoFocus value={title} onChange={(event) => setTitle(event.target.value)} onKeyDown={(event) => { if (event.key === "Enter" && !event.nativeEvent.isComposing && event.keyCode !== 229) { event.preventDefault(); submit(); } }} placeholder="Nhập việc, nhấn Enter để thêm..." aria-label={`Thêm việc vào ${project.name}`} />
       {title && <button onClick={submit}>Thêm</button>}
     </div>
   );
@@ -167,7 +169,7 @@ export function TaskPanel({ onManageProjects }: { onManageProjects: () => void }
       <div className="project-task-list">
         {activeProjects.map((project) => {
           const projectTasks = dayTasks.filter((task) => task.projectId === project.id).sort((a, b) => a.sortOrder - b.sortOrder);
-          if (!projectTasks.length && dayTasks.length > 0 && !revealedProjects.has(project.id)) return null;
+          if (!projectTasks.length && !revealedProjects.has(project.id)) return null;
           return (
             <article className="project-group" key={project.id}>
               <div className="project-heading">
@@ -184,7 +186,7 @@ export function TaskPanel({ onManageProjects }: { onManageProjects: () => void }
       {activeProjects.length > 0 && dayTasks.length === 0 && (
         <div className="empty-day">
           <EmptyState icon={ListTodo} title="Chưa có việc trong ngày này" body="Chọn một dự án bên dưới để nhập nhanh công việc đầu tiên." />
-          <div className="empty-quick-grid">{activeProjects.map((project) => <QuickAdd project={project} key={project.id} />)}</div>
+          <div className="empty-quick-grid">{activeProjects.map((project) => <button className="soft-button" key={project.id} onClick={() => revealProject(project.id)}><CirclePlus size={16} /><span className="project-dot" style={{ background: project.color }} />{project.name}</button>)}</div>
         </div>
       )}
 

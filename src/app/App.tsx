@@ -1,8 +1,9 @@
 import { useEffect, useState } from "react";
-import { BarChart3, CalendarDays, ChevronDown, ChevronUp, FolderKanban, LayoutDashboard, Settings } from "lucide-react";
+import { BarChart3, CalendarDays, ListChecks, ChevronDown, ChevronUp, FolderKanban, LayoutDashboard, Settings } from "lucide-react";
 import { WindowControls } from "../components/WindowControls";
 import { CalendarPanel } from "../features/calendar/CalendarPanel";
 import { DashboardView } from "../features/dashboard/DashboardView";
+import { ProceduresView } from "../features/procedures/ProceduresView";
 import { ProjectsView } from "../features/projects/ProjectsView";
 import { SettingsView } from "../features/settings/SettingsView";
 import { TaskPanel } from "../features/tasks/TaskPanel";
@@ -14,6 +15,7 @@ const nav = [
   { id: "calendar" as const, label: "Lịch", icon: CalendarDays },
   { id: "dashboard" as const, label: "Tổng quan", icon: LayoutDashboard },
   { id: "projects" as const, label: "Dự án", icon: FolderKanban },
+  { id: "procedures" as const, label: "Quy trình", icon: ListChecks },
   { id: "settings" as const, label: "Cài đặt", icon: Settings },
 ];
 
@@ -103,6 +105,7 @@ export default function App() {
       {view === "calendar" && <main className="calendar-view"><CalendarPanel /><TaskPanel onManageProjects={() => setView("projects")} /></main>}
       {view === "dashboard" && <DashboardView />}
       {view === "projects" && <ProjectsView />}
+      {view === "procedures" && <ProceduresView />}
       {view === "settings" && <SettingsView />}
 
       <footer className="app-footer"><span><BarChart3 size={13} /> Morrow lưu dữ liệu an toàn trên máy của bạn</span><span>v0.1 · Local-first</span></footer>
