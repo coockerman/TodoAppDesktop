@@ -48,7 +48,13 @@ cargo check
 npm run tauri build
 ```
 
-File thực thi được tạo trong `src-tauri/target/release/`. Đây là ứng dụng desktop nên không deploy trực tiếp lên Vercel; Vercel chỉ phù hợp nếu muốn đăng riêng bản demo frontend.
+File thực thi được tạo trong `src-tauri/target/release/morrow.exe`.
+Bộ cài Windows x64 được tạo trong `src-tauri/target/release/bundle/nsis/Morrow_0.1.0_x64-setup.exe`.
+Chỉ cần gửi file `-setup.exe` sang máy Windows 10/11 Intel/AMD 64-bit khác và chạy để cài; không cần Node.js hoặc Rust trên máy sử dụng.
+Bộ cài cài theo tài khoản Windows hiện tại và tự tải WebView2 nếu máy chưa có (cần Internet trong trường hợp này).
+Dữ liệu nằm riêng trên từng máy; dùng Xuất/Nhập JSON nếu muốn chuyển dữ liệu.
+
+Đây là ứng dụng desktop nên không deploy trực tiếp lên Vercel; Vercel chỉ phù hợp nếu muốn đăng riêng bản demo frontend.
 
 ## Dữ liệu local
 
