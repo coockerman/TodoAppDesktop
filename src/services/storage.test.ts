@@ -27,10 +27,11 @@ describe("Morrow export", () => {
   expect(() => parseImport(JSON.stringify({ ...payload, procedures: [{ ...data.procedures[0], steps: [{ title: "Bad" }] }] }))).toThrow();
  });
 
- it("starts empty with onboarding and working default definitions", async () => {
+ it("starts with Demo, onboarding and Todo / Done definitions", async () => {
   const data = await loadData();
-  expect(data.projects).toEqual([]);
-  expect(data.tasks).toEqual([]);
+  expect(data.projects[0].name).toBe("dự án Demo");
+  expect(data.tasks).toHaveLength(3);
+  expect(data.statuses.map(item => item.name)).toEqual(["Todo", "Done"]);
   expect(data.procedures).toEqual([]);
   expect(data.settings.onboardingCompleted).toBe(false);
   expect(data.priorities.some((item) => item.isDefault)).toBe(true);
@@ -45,3 +46,13 @@ describe("Morrow export", () => {
   expect(loaded.projects).toEqual(projects);
   expect(loaded.settings.onboardingCompleted).toBe(true);
  });
+
+it("migrates old completion-only definitions without marking open tasks done", () => {
+  const data = createSeedData();
+  data.statuses = data.statuses.filter(item => item.isCompletionStatus);
+  data.tasks = data.tasks.map(task => ({ ...task, statuses: task.statuses.filter(value => value.statusId === "status-complete") }));
+  const imported = parseImport(JSON.stringify(buildExportPayload(data)));
+  expect(imported.tasks[1].completedAt).toBeNull();
+  expect(imported.tasks[1].statuses.filter(value => value.checked).map(value => value.statusId)).toEqual(["status-todo"]);
+  expect(imported.tasks[0].completedAt).toBe(data.tasks[0].completedAt);
+});

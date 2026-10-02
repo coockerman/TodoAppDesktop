@@ -1,3 +1,4 @@
+import { createSeedData } from "../data/seed";
 import { create } from "zustand";
 import { format } from "date-fns";
 import { createId, sessionId } from "../lib/id";
@@ -16,7 +17,9 @@ import type {
 type EntityType = AuditEvent["entityType"];
 type AppState = AppData & {
   addProcedure: (name: string, sourceId?: string) => string;
-  updateProcedure: (id: string, patch: Partial<Pick<Procedure, "name" | "steps" | "deletedAt">>, eventType?: string) => void;
+  updateProcedure: (id: string, patch: Partial<Pick<Procedure, "name" | "steps" | "deletedAt" | "allowImages" | "allowMultiline">>, eventType?: string) => void;
+  resetAccount: () => Promise<void>;
+  reorderDefinition: (kind: "statuses" | "priorities", id: string, offset: number) => void;
   hydrated: boolean;
   selectedDate: string;
   hydrate: () => Promise<void>;
@@ -28,6 +31,7 @@ type AppState = AppData & {
   scheduleTask: (taskId: string, date: string) => void;
   unscheduleTask: (taskId: string) => void;
   reorderTask: (taskId: string, targetTaskId: string) => void;
+  setTaskStatus: (taskId: string, statusId: string) => void;
   toggleStatus: (taskId: string, statusId: string) => void;
   deleteTask: (taskId: string) => void;
   bulkMoveOpenTasks: (fromDate: string, toDate: string) => number;
@@ -85,6 +89,21 @@ export const useMorrowStore = create<AppState>((set, get) => {
       hydrationPromise ??= loadData();
       set({ ...(await hydrationPromise), hydrated: true });
     },
+    resetAccount: async () => {
+      const data = createSeedData();
+      await persistChain;
+      await persistData(data);
+      hydrationPromise = Promise.resolve(data);
+      set({ ...data, selectedDate: format(new Date(), "yyyy-MM-dd"), hydrated: true });
+    },
+    reorderDefinition: (kind, id, offset) => commit(state => {
+      const items = state[kind].filter(item => !item.deletedAt).sort((a, b) => a.weight - b.weight);
+      const index = items.findIndex(item => item.id === id);
+      if (index < 0 || index + offset < 0 || index + offset >= items.length) return {};
+      [items[index], items[index + offset]] = [items[index + offset], items[index]];
+      const ordered = items.map((item, index) => ({ ...item, weight: (index + 1) * 10, sortOrder: index, updatedAt: now() }));
+      return { [kind]: state[kind].map(item => ordered.find(next => next.id === item.id) ?? item), auditEvents: [...state.auditEvents, audit(kind === "statuses" ? "status" : "priority", id, "reordered", null, ordered)] };
+    }),
     replaceData: (data) => {
       const event = audit("import", "database", "imported", null, { counts: { projects: data.projects.length, tasks: data.tasks.length } });
       set({ ...data, auditEvents: [...data.auditEvents, event], hydrated: true });
@@ -96,7 +115,7 @@ export const useMorrowStore = create<AppState>((set, get) => {
       commit((state) => {
         const stamp = now();
         const source = state.procedures.find((item) => item.id === sourceId && !item.deletedAt);
-        const procedure: Procedure = { id, name: name.trim(), steps: source?.steps.map((step) => ({ ...step, id: createId("step"), checked: false })) ?? [], createdAt: stamp, updatedAt: stamp, deletedAt: null };
+        const procedure: Procedure = { id, name: name.trim(), allowImages: source?.allowImages ?? false, allowMultiline: source?.allowMultiline ?? false, steps: source?.steps.map((step) => ({ ...step, id: createId("step"), checked: false })) ?? [], createdAt: stamp, updatedAt: stamp, deletedAt: null };
         return { procedures: [...state.procedures, procedure], auditEvents: [...state.auditEvents, audit("procedure", id, source ? "duplicated" : "created", null, procedure)] };
       });
       return id;
@@ -116,7 +135,7 @@ export const useMorrowStore = create<AppState>((set, get) => {
         scheduledDate: date ?? state.selectedDate,
         priorityId: state.priorities.find((item) => item.isDefault && !item.deletedAt)?.id ?? state.priorities[0]?.id ?? "",
         sortOrder: state.tasks.filter((item) => item.scheduledDate === (date ?? state.selectedDate)).length,
-        statuses: state.statuses.filter((item) => !item.deletedAt).map((item) => ({ statusId: item.id, checked: false, checkedAt: null, updatedAt: createdAt })),
+        statuses: state.statuses.filter((item) => !item.deletedAt).map((item) => ({ statusId: item.id, checked: item.id === state.statuses.filter(value => !value.deletedAt && !value.isCompletionStatus).sort((a,b) => a.weight-b.weight)[0]?.id, checkedAt: item.id === state.statuses.filter(value => !value.deletedAt && !value.isCompletionStatus).sort((a,b) => a.weight-b.weight)[0]?.id ? createdAt : null, updatedAt: createdAt })),
         completedAt: null, createdAt, updatedAt: createdAt, deletedAt: null,
       };
       return { tasks: [...state.tasks, task], auditEvents: [...state.auditEvents, audit("task", task.id, "created", null, task)] };
@@ -127,7 +146,7 @@ export const useMorrowStore = create<AppState>((set, get) => {
         id: createId("task"), projectId, title: title.trim(), notes: "", scheduledDate: null,
         priorityId: state.priorities.find((item) => item.isDefault && !item.deletedAt)?.id ?? state.priorities[0]?.id ?? "",
         sortOrder: state.tasks.filter((item) => item.projectId === projectId && item.scheduledDate === null).length,
-        statuses: state.statuses.filter((item) => !item.deletedAt).map((item) => ({ statusId: item.id, checked: false, checkedAt: null, updatedAt: createdAt })),
+        statuses: state.statuses.filter((item) => !item.deletedAt).map((item) => ({ statusId: item.id, checked: item.id === state.statuses.filter(value => !value.deletedAt && !value.isCompletionStatus).sort((a,b) => a.weight-b.weight)[0]?.id, checkedAt: item.id === state.statuses.filter(value => !value.deletedAt && !value.isCompletionStatus).sort((a,b) => a.weight-b.weight)[0]?.id ? createdAt : null, updatedAt: createdAt })),
         completedAt: null, createdAt, updatedAt: createdAt, deletedAt: null,
       };
       return { tasks: [...state.tasks, task], auditEvents: [...state.auditEvents, audit("task", task.id, "backlog_created", null, task)] };
@@ -162,6 +181,19 @@ export const useMorrowStore = create<AppState>((set, get) => {
         tasks: state.tasks.map((item) => item.id === taskId ? after : item.id === targetTaskId ? targetAfter : item),
         auditEvents: [...state.auditEvents, audit("task", taskId, "reordered", before, after, { targetTaskId })],
       };
+    }),
+    setTaskStatus: (taskId, statusId) => commit(state => {
+      const before = state.tasks.find(item => item.id === taskId && !item.deletedAt);
+      const selected = state.statuses.find(item => item.id === statusId && !item.deletedAt);
+      if (!before || !selected) return {};
+      const stamp = now();
+      const values = state.statuses.filter(item => !item.deletedAt).map(item => {
+        const previous = before.statuses.find(value => value.statusId === item.id);
+        const checked = item.id === statusId;
+        return { statusId: item.id, checked, checkedAt: checked ? (previous?.checkedAt ?? stamp) : null, updatedAt: stamp };
+      });
+      const after = { ...before, statuses: values, completedAt: selected.isCompletionStatus ? (before.completedAt ?? stamp) : null, updatedAt: stamp };
+      return { tasks: state.tasks.map(item => item.id === taskId ? after : item), auditEvents: [...state.auditEvents, audit("task", taskId, "status_selected", before, after, { statusId })] };
     }),
     toggleStatus: (taskId, statusId) => commit((state) => {
       const before = state.tasks.find((item) => item.id === taskId);

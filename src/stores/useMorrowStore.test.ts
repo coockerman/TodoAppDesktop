@@ -85,3 +85,38 @@ describe("Morrow task workflow", () => {
     expect(reordered.auditEvents.at(-1)?.eventType).toBe("reordered");
   });
 });
+
+it("resets persisted data and onboarding for a new start", async () => {
+  await useMorrowStore.getState().resetAccount();
+  const state = useMorrowStore.getState();
+  expect(state.projects.map(item => item.name)).toEqual(["dự án Demo"]);
+  expect(state.auditEvents).toEqual([]);
+  expect(state.procedures).toEqual([]);
+  expect(state.settings.onboardingCompleted).toBe(false);
+  expect(JSON.parse(localStorage.getItem("morrow-app-data-v1")!).projects).toEqual(state.projects);
+});
+it("moves definitions across equal weights without losing records", () => {
+  useMorrowStore.setState(createSeedData());
+  useMorrowStore.getState().addStatus("First", "#ffffff");
+  useMorrowStore.getState().addStatus("Second", "#ffffff");
+  const id = useMorrowStore.getState().statuses.at(-1)!.id;
+  useMorrowStore.getState().reorderDefinition("statuses", id, -1);
+  const ordered = useMorrowStore.getState().statuses.sort((a,b) => a.weight-b.weight);
+  expect(ordered[1].id).toBe(id);
+  expect(new Set(ordered.map(item => item.weight)).size).toBe(ordered.length);
+});
+
+it("selects exactly one status and clears completion when reopening", () => {
+  useMorrowStore.setState(createSeedData());
+  const store = useMorrowStore.getState();
+  store.addStatus("Todo", "#4f8bc9");
+  const todo = useMorrowStore.getState().statuses.find(item => item.name === "Todo")!;
+  store.setTaskStatus("task-calendar", "status-complete");
+  const completedAt = useMorrowStore.getState().tasks.find(item => item.id === "task-calendar")!.completedAt;
+  store.setTaskStatus("task-calendar", "status-complete");
+  expect(useMorrowStore.getState().tasks.find(item => item.id === "task-calendar")!.completedAt).toBe(completedAt);
+  store.setTaskStatus("task-calendar", todo.id);
+  const task = useMorrowStore.getState().tasks.find(item => item.id === "task-calendar")!;
+  expect(task.completedAt).toBeNull();
+  expect(task.statuses.filter(value => value.checked).map(value => value.statusId)).toEqual([todo.id]);
+});

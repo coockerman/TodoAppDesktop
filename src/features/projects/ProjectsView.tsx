@@ -1,6 +1,8 @@
+import { CreateProjectDialog } from "./CreateProjectDialog";
+import { TaskStatusSelect } from "../../components/TaskStatusSelect";
 import { useEffect, useState } from "react";
 import { addDays, format, startOfToday } from "date-fns";
-import { Archive, ArchiveRestore, CalendarDays, Check, CirclePlus, FolderKanban, Save, Trash2, X } from "lucide-react";
+import { Archive, ArchiveRestore, CalendarDays, CirclePlus, FolderKanban, Save, Trash2, X } from "lucide-react";
 import { useMorrowStore } from "../../stores/useMorrowStore";
 import type { Project, Task } from "../../types/models";
 
@@ -12,6 +14,7 @@ function ProjectCard({ project, onOpenBacklog }: { project: Project; onOpenBackl
   const [description, setDescription] = useState(project.description);
   const [customColor, setCustomColor] = useState(project.color);
   const count = tasks.filter((task) => task.projectId === project.id && !task.deletedAt).length;
+  const completedCount = tasks.filter(task => task.projectId === project.id && !task.deletedAt && task.completedAt).length;
   const backlogCount = tasks.filter((task) => task.projectId === project.id && task.scheduledDate === null && !task.deletedAt && !task.completedAt).length;
   const save = () => updateProject(project.id, { name: name.trim() || project.name, description });
   return (
@@ -19,6 +22,7 @@ function ProjectCard({ project, onOpenBacklog }: { project: Project; onOpenBackl
       <div className="project-card-top"><span className="project-avatar"><FolderKanban size={19} /></span><small>{count} công việc</small></div>
       <input className="project-name-input" value={name} onChange={(event) => setName(event.target.value)} onBlur={save} />
       <textarea value={description} onChange={(event) => setDescription(event.target.value)} onBlur={save} placeholder="Mô tả ngắn cho dự án" />
+      <p className="procedure-hint">{completedCount}/{count} hoàn thành · {count ? Math.round(completedCount / count * 100) : 0}%</p><progress max={count || 1} value={completedCount} aria-label={`Tiến độ ${project.name}`} />
       <div className="project-color-row">
         <div className="color-palette">{palette.map((color) => <button className={project.color === color ? "selected" : ""} style={{ background: color }} key={color} onClick={() => { setCustomColor(color); updateProject(project.id, { color }); }} aria-label={`Chọn màu ${color}`} />)}</div>
         <label className="custom-color-control" title="Chọn màu tùy chỉnh">
@@ -40,7 +44,7 @@ function ProjectCard({ project, onOpenBacklog }: { project: Project; onOpenBackl
 }
 
 function BacklogTaskRow({ task, archived, onScheduled }: { task: Task; archived: boolean; onScheduled?: (task: Task) => void }) {
-  const { priorities, statuses, updateTask, toggleStatus, scheduleTask, deleteTask } = useMorrowStore();
+  const { priorities, updateTask, scheduleTask, deleteTask } = useMorrowStore();
   const [title, setTitle] = useState(task.title);
   useEffect(() => setTitle(task.title), [task.title]);
   const saveTitle = () => {
@@ -61,10 +65,7 @@ function BacklogTaskRow({ task, archived, onScheduled }: { task: Task; archived:
         <button className="backlog-delete" onClick={() => deleteTask(task.id)} title="Xóa công việc"><Trash2 size={14} /></button>
       </div>
       <div className="backlog-task-footer">
-        <div className="backlog-statuses">{statuses.filter((item) => !item.deletedAt).sort((a, b) => a.weight - b.weight).map((status) => {
-          const checked = task.statuses.find((item) => item.statusId === status.id)?.checked ?? false;
-          return <button key={status.id} className={checked ? "checked" : ""} onClick={() => toggleStatus(task.id, status.id)} style={{ "--status-color": status.color } as React.CSSProperties} title={status.name}>{checked && <Check size={11} />}<span>{status.name}</span></button>;
-        })}</div>
+        <TaskStatusSelect task={task} />
         {!archived && <div className="backlog-schedule"><button onClick={() => schedule(today)}>Hôm nay</button><button onClick={() => schedule(tomorrow)}>Ngày mai</button><input className="backlog-date-input" type="date" min={today} defaultValue="" onChange={(event) => { if (event.target.value) schedule(event.target.value); }} aria-label="Chọn ngày cho công việc" title="Chọn ngày" /></div>}
       </div>
     </div>
@@ -109,23 +110,22 @@ function BacklogPanel({ project, onClose }: { project: Project; onClose: () => v
 
 export function ProjectsView() {
   const { projects, addProject } = useMorrowStore();
-  const [name, setName] = useState("");
-  const [newColor, setNewColor] = useState(palette[0]);
+  const [creating, setCreating] = useState(false);
   const [mode, setMode] = useState<"active" | "archived">("active");
   const [backlogProjectId, setBacklogProjectId] = useState<string | null>(null);
-  const create = () => { if (name.trim()) { addProject(name, newColor); setName(""); } };
   const visibleProjects = projects
     .filter((item) => !item.deletedAt && (mode === "archived" ? item.archived : !item.archived))
     .sort((a, b) => a.sortOrder - b.sortOrder);
   const archivedCount = projects.filter((item) => !item.deletedAt && item.archived).length;
   return (
     <main className="large-view">
-      <div className="view-title-row"><div><span className="eyebrow">Không gian làm việc</span><h1>{mode === "active" ? "Quản lý dự án" : "Dự án lưu trữ"}</h1></div>{mode === "active" && <div className="new-project"><input type="color" className="new-project-color" value={newColor} onChange={(event) => setNewColor(event.target.value)} aria-label="Màu dự án mới" /><input value={name} onChange={(event) => setName(event.target.value)} onKeyDown={(event) => event.key === "Enter" && create()} placeholder="Tên dự án mới" /><button className="primary-button" onClick={create}><CirclePlus size={16} /> Tạo dự án</button></div>}</div>
+      <div className="view-title-row"><div><span className="eyebrow">Không gian làm việc</span><h1>{mode === "active" ? "Quản lý dự án" : "Dự án lưu trữ"}</h1></div>{mode === "active" && <button className="primary-button" onClick={() => setCreating(true)}><CirclePlus size={16} /> Tạo dự án</button>}</div>
       <div className="project-view-tabs" role="tablist" aria-label="Loại dự án">
         <button className={mode === "active" ? "active" : ""} onClick={() => setMode("active")} role="tab" aria-selected={mode === "active"}><FolderKanban size={15} /> Đang dùng</button>
         <button className={mode === "archived" ? "active" : ""} onClick={() => setMode("archived")} role="tab" aria-selected={mode === "archived"}><ArchiveRestore size={15} /> Lưu trữ <span>{archivedCount}</span></button>
       </div>
       {visibleProjects.length > 0 ? <div className="project-grid">{visibleProjects.map((project) => <ProjectCard project={project} onOpenBacklog={() => setBacklogProjectId(project.id)} key={project.id} />)}</div> : <div className="projects-empty"><ArchiveRestore size={25} /><strong>{mode === "archived" ? "Chưa có dự án lưu trữ" : "Chưa có dự án đang dùng"}</strong><span>{mode === "archived" ? "Các dự án được lưu trữ sẽ xuất hiện tại đây để bạn khôi phục hoặc chỉnh sửa." : "Tạo dự án đầu tiên để bắt đầu lên kế hoạch."}</span></div>}
+      {creating && <CreateProjectDialog onClose={() => setCreating(false)} onCreate={(name, color) => { addProject(name, color); setCreating(false); }} />}
       {backlogProjectId && projects.find((project) => project.id === backlogProjectId && !project.deletedAt) && <BacklogPanel project={projects.find((project) => project.id === backlogProjectId)!} onClose={() => setBacklogProjectId(null)} />}
     </main>
   );

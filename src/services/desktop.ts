@@ -7,11 +7,15 @@ export async function applyAlwaysOnTop(enabled: boolean) {
   if (inTauri()) await getCurrentWindow().setAlwaysOnTop(enabled);
 }
 
+let expandedSize: LogicalSize | null = null;
 export async function applyMiniMode(enabled: boolean) {
   if (!inTauri()) return;
   const appWindow = getCurrentWindow();
+  const size = (await appWindow.innerSize()).toLogical(await appWindow.scaleFactor());
+  if (enabled && size.height > 68) expandedSize = new LogicalSize(size.width, size.height);
   await appWindow.setResizable(!enabled);
-  await appWindow.setSize(new LogicalSize(enabled ? 560 : 760, enabled ? 68 : 860));
+  const restored = expandedSize ?? size;
+  await appWindow.setSize(new LogicalSize(enabled ? 560 : Math.min(restored.width, window.screen.availWidth), enabled ? 68 : Math.min(restored.height > 68 ? restored.height : 640, window.screen.availHeight - 48)));
 }
 
 export async function applyAutostart(enabled: boolean) {

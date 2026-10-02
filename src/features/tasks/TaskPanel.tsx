@@ -1,5 +1,6 @@
+import { TaskStatusSelect } from "../../components/TaskStatusSelect";
 import { useEffect, useRef, useState } from "react";
-import { ArrowRight, CalendarPlus, CalendarX, Check, ChevronDown, CirclePlus, FolderPlus, ListTodo, MoreHorizontal, Settings, Trash2, X } from "lucide-react";
+import { ArrowRight, CalendarPlus, CalendarX, ChevronDown, CirclePlus, FolderPlus, ListTodo, MoreHorizontal, Settings, Trash2, X } from "lucide-react";
 import { formatFullDate, parseDateKey } from "../../lib/date";
 import { useMorrowStore } from "../../stores/useMorrowStore";
 import type { Project, Task } from "../../types/models";
@@ -35,7 +36,7 @@ function formatCompletedAt(value: string) {
 }
 
 function TaskRow({ task }: { task: Task }) {
-  const { priorities, statuses, reorderTask, toggleStatus, updateTask, unscheduleTask, deleteTask } = useMorrowStore();
+  const { priorities, statuses, reorderTask, updateTask, unscheduleTask, deleteTask } = useMorrowStore();
   const [title, setTitle] = useState(task.title);
   const [dragging, setDragging] = useState(false);
   const [dragOver, setDragOver] = useState(false);
@@ -71,26 +72,14 @@ function TaskRow({ task }: { task: Task }) {
       <select className="priority-select" value={task.priorityId} onChange={(event) => updateTask(task.id, { priorityId: event.target.value })} style={{ color: priority?.color }} aria-label="Độ ưu tiên">
         {priorities.filter((item) => !item.deletedAt).sort((a, b) => a.weight - b.weight).map((item) => <option value={item.id} key={item.id} style={{ color: item.color, backgroundColor: "var(--surface)" }}>{item.name}</option>)}
       </select>
-      <div className="status-cells">
-        {activeStatuses.map((status) => {
-          const checked = task.statuses.find((item) => item.statusId === status.id)?.checked ?? false;
-          return <button
-            key={status.id}
-            className={`status-check ${checked ? "checked" : ""}`}
-            title={status.name}
-            aria-label={status.name}
-            onClick={() => toggleStatus(task.id, status.id)}
-            style={{ "--status-color": status.color } as React.CSSProperties}
-          >{checked && <Check size={14} />}</button>;
-        })}
-      </div>
+      <TaskStatusSelect task={task} />
       <div className="task-actions"><button className="unschedule-task" onClick={() => unscheduleTask(task.id)} title="Đưa về Backlog"><CalendarX size={14} /></button><button className="delete-task" onClick={() => deleteTask(task.id)} title="Xóa công việc"><Trash2 size={15} /></button></div>
     </div>
   );
 }
 
 export function TaskPanel({ onManageProjects }: { onManageProjects: () => void }) {
-  const { selectedDate, projects, tasks, statuses, bulkMoveOpenTasks, scheduleTask } = useMorrowStore();
+  const { selectedDate, projects, tasks, bulkMoveOpenTasks, scheduleTask } = useMorrowStore();
   const [targetDate, setTargetDate] = useState("");
   const [notice, setNotice] = useState("");
   const [projectPickerOpen, setProjectPickerOpen] = useState(false);
@@ -101,7 +90,6 @@ export function TaskPanel({ onManageProjects }: { onManageProjects: () => void }
   const dayTasks = tasks.filter((item) => item.scheduledDate === selectedDate && !item.deletedAt);
   const openCount = dayTasks.filter((item) => !item.completedAt).length;
   const doneCount = dayTasks.length - openCount;
-  const activeStatuses = statuses.filter((item) => !item.deletedAt).sort((a, b) => a.weight - b.weight);
   const projectsInDay = new Set(dayTasks.map((task) => task.projectId));
   const availableProjects = activeProjects.filter((project) => !projectsInDay.has(project.id) && !revealedProjects.has(project.id));
   const backlogTasks = tasks.filter((task) => task.scheduledDate === null && !task.deletedAt && !task.completedAt && activeProjects.some((project) => project.id === task.projectId));
@@ -174,7 +162,7 @@ export function TaskPanel({ onManageProjects }: { onManageProjects: () => void }
             <article className="project-group" key={project.id}>
               <div className="project-heading">
                 <div><span className="project-dot" style={{ background: project.color }} /><strong>{project.name}</strong><small>{projectTasks.length} việc</small></div>
-                {projectTasks.length > 0 && <div className="status-labels">{activeStatuses.map((status) => <span key={status.id}>{status.name}</span>)}</div>}
+
               </div>
               {projectTasks.map((task) => <TaskRow task={task} key={task.id} />)}
               <QuickAdd project={project} />

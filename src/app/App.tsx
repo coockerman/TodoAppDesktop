@@ -1,5 +1,6 @@
+import { DataView } from "../features/data/DataView";
 import { useEffect, useState } from "react";
-import { BarChart3, CalendarDays, ListChecks, ChevronDown, ChevronUp, FolderKanban, LayoutDashboard, Settings } from "lucide-react";
+import { Database, BarChart3, CalendarDays, ListChecks, ChevronDown, ChevronUp, FolderKanban, LayoutDashboard, Settings } from "lucide-react";
 import { WelcomeGuide } from "../features/onboarding/WelcomeGuide";
 import { WindowControls } from "../components/WindowControls";
 import { CalendarPanel } from "../features/calendar/CalendarPanel";
@@ -17,6 +18,7 @@ const nav = [
   { id: "dashboard" as const, label: "Tổng quan", icon: LayoutDashboard },
   { id: "projects" as const, label: "Dự án", icon: FolderKanban },
   { id: "procedures" as const, label: "Quy trình", icon: ListChecks },
+  { id: "data" as const, label: "Dữ liệu", icon: Database },
   { id: "settings" as const, label: "Cài đặt", icon: Settings },
 ];
 
@@ -114,11 +116,12 @@ export default function App() {
       {view === "dashboard" && <DashboardView />}
       {view === "projects" && <ProjectsView />}
       {view === "procedures" && <ProceduresView />}
-      {view === "settings" && <SettingsView onShowGuide={() => setGuideRequested(true)} />}
+      {view === "data" && <DataView />}
+      {view === "settings" && <SettingsView onShowGuide={() => setGuideRequested(true)} onData={() => setView("data")} />}
 
-      <footer className="app-footer"><span><BarChart3 size={13} /> Morrow lưu dữ liệu an toàn trên máy của bạn</span><span>v0.1 · Local-first</span></footer>
+      <footer className="app-footer"><span><BarChart3 size={13} /> Morrow lưu dữ liệu an toàn trên máy của bạn</span><span>v0.0.1.2 · Local-first</span></footer>
     </div>
-    {showGuide && <WelcomeGuide onClose={closeGuide} onStart={() => { closeGuide(); if (!useMorrowStore.getState().projects.some((project) => !project.deletedAt)) setView("projects"); }} />}
+    {showGuide && <WelcomeGuide onClose={closeGuide} onStart={() => { closeGuide(); setView("calendar"); }} />}
     </>
   );
 }

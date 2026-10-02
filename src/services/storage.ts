@@ -1,26 +1,32 @@
+import { getTaskStatus } from "../lib/taskStatus";
 import Database from "@tauri-apps/plugin-sql";
 import { open, save } from "@tauri-apps/plugin-dialog";
 import { readTextFile, writeTextFile } from "@tauri-apps/plugin-fs";
 import { z } from "zod";
-import { createSeedData } from "../data/seed";
+import { createSeedData, defaultStatuses } from "../data/seed";
 import type { AppData, ExportPayload } from "../types/models";
 
 const STORAGE_KEY = "morrow-app-data-v1";
 const isTauri = () => "__TAURI_INTERNALS__" in window;
 let database: Database | null = null;
 
+const stampFields = { id: z.string().min(1), createdAt: z.string(), updatedAt: z.string(), deletedAt: z.string().nullable() };
+const projectSchema = z.object({ ...stampFields, name: z.string(), description: z.string(), color: z.string(), sortOrder: z.number().finite(), archived: z.boolean() });
+const taskSchema = z.object({ ...stampFields, projectId: z.string(), title: z.string(), notes: z.string(), scheduledDate: z.string().nullable().optional(), priorityId: z.string(), sortOrder: z.number().finite(), completedAt: z.string().nullable(), statuses: z.array(z.object({ statusId: z.string(), checked: z.boolean(), checkedAt: z.string().nullable(), updatedAt: z.string() })) });
+const definitionFields = { ...stampFields, name: z.string(), color: z.string(), weight: z.number().finite(), sortOrder: z.number().finite() };
 const importSchema = z.object({
   schemaVersion: z.literal(1),
   app: z.literal("Morrow"),
   procedures: z.array(z.object({
     id: z.string(), name: z.string(),
-    steps: z.array(z.object({ id: z.string(), title: z.string(), checked: z.boolean() })),
+    steps: z.array(z.object({ id: z.string(), title: z.string(), checked: z.boolean(), images: z.array(z.string().regex(/^data:image\/(png|jpeg|gif|webp);base64,/)).optional() })),
+    allowImages: z.boolean().optional(), allowMultiline: z.boolean().optional(),
     createdAt: z.string(), updatedAt: z.string(), deletedAt: z.string().nullable(),
   })).optional(),
-  projects: z.array(z.unknown()),
-  tasks: z.array(z.unknown()),
-  priorities: z.array(z.unknown()),
-  statuses: z.array(z.unknown()),
+  projects: z.array(projectSchema),
+  tasks: z.array(taskSchema),
+  priorities: z.array(z.object({ ...definitionFields, isDefault: z.boolean() })),
+  statuses: z.array(z.object({ ...definitionFields, isCompletionStatus: z.boolean(), isSystem: z.boolean() })),
   auditEvents: z.array(z.unknown()),
   settings: z.object({
     theme: z.enum(["system", "light", "dark"]),
@@ -123,6 +129,7 @@ export async function importDataFromFile(): Promise<AppData | null> {
         reject(error);
       }
     };
+    input.oncancel = () => resolve(null);
     input.click();
   });
 }
@@ -130,6 +137,14 @@ export async function importDataFromFile(): Promise<AppData | null> {
 export function parseImport(content: string): AppData {
   const parsed = JSON.parse(content) as ExportPayload;
   importSchema.parse(parsed);
+  for (const items of [parsed.projects, parsed.tasks, parsed.priorities, parsed.statuses, parsed.procedures ?? []]) {
+    if (new Set(items.map(item => item.id)).size !== items.length) throw new Error("ID bị trùng trong file.");
+  }
+  const projectIds = new Set(parsed.projects.map(item => item.id));
+  const priorityIds = new Set(parsed.priorities.map(item => item.id));
+  const statusIds = new Set(parsed.statuses.map(item => item.id));
+  if (!parsed.statuses.some(item => item.isCompletionStatus && !item.deletedAt)) throw new Error("Thiếu trạng thái hoàn thành.");
+  if (parsed.tasks.some(task => !projectIds.has(task.projectId) || !priorityIds.has(task.priorityId) || task.statuses.some(value => !statusIds.has(value.statusId)))) throw new Error("Liên kết dữ liệu không hợp lệ.");
   return normalizeData({
     procedures: parsed.procedures ?? [],
     projects: parsed.projects,
@@ -142,10 +157,22 @@ export function parseImport(content: string): AppData {
 }
 
 function normalizeData(data: AppData): AppData {
+  const statuses = data.statuses.some(item => !item.deletedAt && !item.isCompletionStatus) ? data.statuses
+    : [...data.statuses.filter(item => item.id !== "status-todo"), { ...defaultStatuses[0], deletedAt: null }];
   return {
     ...data,
     procedures: data.procedures ?? [],
-    tasks: data.tasks.map((task) => ({ ...task, scheduledDate: task.scheduledDate ?? null })),
+    statuses,
+    tasks: data.tasks.map(task => {
+      const selected = getTaskStatus(task, statuses);
+      const stamp = task.updatedAt;
+      return { ...task, scheduledDate: task.scheduledDate ?? null,
+        statuses: statuses.filter(item => !item.deletedAt).map(item => {
+          const previous = task.statuses.find(value => value.statusId === item.id);
+          const checked = item.id === selected?.id;
+          return { statusId: item.id, checked, checkedAt: checked ? (previous?.checkedAt ?? stamp) : null, updatedAt: previous?.updatedAt ?? stamp };
+        }), completedAt: selected?.isCompletionStatus ? (task.completedAt ?? stamp) : null };
+    }),
     settings: {
       ...data.settings,
       fontScale: data.settings.fontScale ?? 1,

@@ -26,14 +26,14 @@ it("shows four illustrated steps and supports back and start", () => {
   expect(start).toHaveBeenCalledOnce();
 });
 
-it("remembers skipping, leaves user data empty, and reopens from Settings", () => {
+it("remembers skipping, keeps the Demo project, and reopens from Settings", () => {
   render(<App />);
   expect(screen.getByRole("dialog")).toBeInTheDocument();
   fireEvent.click(screen.getByRole("button", { name: "Bỏ qua" }));
   expect(screen.queryByRole("dialog")).not.toBeInTheDocument();
   expect(useMorrowStore.getState().settings.onboardingCompleted).toBe(true);
-  expect(useMorrowStore.getState().projects).toEqual([]);
-  expect(useMorrowStore.getState().tasks).toEqual([]);
+  expect(useMorrowStore.getState().projects[0].name).toBe("dự án Demo");
+  expect(useMorrowStore.getState().tasks).toHaveLength(3);
   fireEvent.click(screen.getByRole("button", { name: /^Cài đặt$/ }));
   fireEvent.click(screen.getByRole("button", { name: "Xem lại hướng dẫn" }));
   expect(screen.getByRole("dialog")).toBeInTheDocument();

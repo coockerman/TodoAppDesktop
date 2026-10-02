@@ -1,3 +1,4 @@
+import { getTaskStatus } from "../../lib/taskStatus";
 import { useMemo, useState } from "react";
 import { endOfMonth, endOfWeek, format, isBefore, parseISO, startOfMonth, startOfToday, startOfWeek } from "date-fns";
 import { CalendarDays, Check, Search, SlidersHorizontal } from "lucide-react";
@@ -17,7 +18,7 @@ function formatCompletedAt(value: string) {
 }
 
 export function DashboardView() {
-  const { projects, tasks, priorities } = useMorrowStore();
+  const { projects, tasks, priorities, statuses } = useMorrowStore();
   const [range, setRange] = useState<Range>("week");
   const [projectId, setProjectId] = useState("all");
   const [query, setQuery] = useState("");
@@ -61,6 +62,12 @@ export function DashboardView() {
         <div className="metric-card coral"><span>Đang quá hạn</span><strong>{overdue}</strong><small>cần được chú ý</small></div>
       </div>
 
+      <section className="project-progress-grid">{projects.filter(project => !project.deletedAt && (projectId === "all" || project.id === projectId)).map(project => {
+        const items = visible.filter(task => task.projectId === project.id);
+        const completed = items.filter(task => task.completedAt).length;
+        const percent = items.length ? Math.round(completed / items.length * 100) : 0;
+        return <article className="settings-card" key={project.id}><strong>{project.name}</strong><p>{completed}/{items.length} hoàn thành · {percent}%</p><progress max="100" value={percent} aria-label={`Tiến độ ${project.name}`} /><p>{items.length - completed} việc còn lại trong bộ lọc</p></article>;
+      })}</section>
       <section className="dashboard-list">
         <div className="section-title"><div><SlidersHorizontal size={17} /><strong>Danh sách theo ngày</strong></div><span>{visible.length} kết quả</span></div>
         {[...groups.entries()].map(([date, dayTasks]) => (
@@ -75,6 +82,7 @@ export function DashboardView() {
                     ? <span className="completion-mark has-completion-tooltip" tabIndex={0} aria-label={`Hoàn thành lúc ${formatCompletedAt(task.completedAt)}`} data-completed-label={`Hoàn thành lúc ${formatCompletedAt(task.completedAt)}`}><Check size={11} strokeWidth={3} /></span>
                     : <span className="project-dot" style={{ background: project?.color }} />}
                   <div><strong>{task.title}</strong><span>{project?.name}</span></div>
+                  <span className="task-progress-label">{getTaskStatus(task, statuses)?.name ?? "Chưa có trạng thái"}</span>
                   <span className="priority-pill" style={{ color: priority?.color, background: `${priority?.color}18` }}>{priority?.name}</span>
                 </div>;
               })}

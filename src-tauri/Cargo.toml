@@ -1,6 +1,6 @@
 [package]
 name = "morrow"
-version = "0.1.0"
+version = "0.0.1-2"
 description = "A calm desktop planner for tomorrow"
 authors = ["Morrow"]
 edition = "2021"

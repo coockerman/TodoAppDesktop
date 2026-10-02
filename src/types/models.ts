@@ -1,6 +1,6 @@
 export type ThemeMode = "system" | "light" | "dark";
 export type CalendarView = "week" | "month";
-export type AppView = "calendar" | "dashboard" | "projects" | "procedures" | "settings";
+export type AppView = "calendar" | "dashboard" | "projects" | "procedures" | "data" | "settings";
 
 export interface Project {
   id: string;
@@ -89,12 +89,15 @@ export interface ProcedureStep {
   id: string;
   title: string;
   checked: boolean;
+  images?: string[];
 }
 
 export interface Procedure {
   id: string;
   name: string;
   steps: ProcedureStep[];
+  allowImages?: boolean;
+  allowMultiline?: boolean;
   createdAt: string;
   updatedAt: string;
   deletedAt: string | null;

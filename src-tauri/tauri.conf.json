@@ -1,7 +1,7 @@
 {
   "$schema": "https://schema.tauri.app/config/2",
   "productName": "Morrow",
-  "version": "0.1.0",
+  "version": "0.0.1-2",
   "identifier": "com.morrow.desktop",
   "build": {
     "beforeDevCommand": "npm run dev",
@@ -15,7 +15,7 @@
         "title": "Morrow",
         "label": "main",
         "width": 760,
-        "height": 860,
+        "height": 640,
         "minWidth": 520,
         "minHeight": 68,
         "center": true,
