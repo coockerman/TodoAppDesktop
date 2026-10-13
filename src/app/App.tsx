@@ -40,7 +40,7 @@ function MiniBar() {
       <div className="mini-progress"><i style={{ width: `${percent}%` }} /></div>
       <strong>{percent}%</strong>
       <button className="icon-button" onClick={expand} aria-label="Mở rộng"><ChevronDown size={17} /></button>
-      <WindowControls />
+      <WindowControls mini />
     </div>
   );
 }

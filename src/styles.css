@@ -371,7 +371,7 @@ input, textarea, select { outline: none; }
 .task-progress-label { margin-left: auto; color: var(--muted); font-size: 11px; white-space: nowrap; }
 .procedure-options { display: flex; flex-wrap: wrap; gap: 12px; margin-top: 15px; font-size: var(--content-text-small); }
 .procedure-step-content { flex: 1; min-width: 0; }
-.procedure-step-content input, .procedure-step-content textarea { width: 100%; padding: 5px 0; border: 0; background: transparent; color: var(--text); font: inherit; resize: vertical; }
+.procedure-step-content input, .procedure-step-content textarea { width: 100%; padding: 5px 0; border: 0; background: transparent; color: var(--text); font-family: inherit; font-size: var(--content-text); line-height: 1.5; resize: vertical; }
 .procedure-step.checked .procedure-step-content > input, .procedure-step.checked .procedure-step-content > textarea { color: var(--muted); text-decoration: line-through; }
 .step-images { padding: 5px; font-size: 10px; color: var(--muted); }
 .step-images figure { margin: 8px 0; }

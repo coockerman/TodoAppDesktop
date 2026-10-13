@@ -8,14 +8,20 @@ export async function applyAlwaysOnTop(enabled: boolean) {
 }
 
 let expandedSize: LogicalSize | null = null;
+let restoreMaximized = false;
 export async function applyMiniMode(enabled: boolean) {
   if (!inTauri()) return;
   const appWindow = getCurrentWindow();
+  if (enabled) {
+    restoreMaximized = await appWindow.isMaximized();
+    if (restoreMaximized) await appWindow.unmaximize();
+  }
   const size = (await appWindow.innerSize()).toLogical(await appWindow.scaleFactor());
   if (enabled && size.height > 68) expandedSize = new LogicalSize(size.width, size.height);
   await appWindow.setResizable(!enabled);
   const restored = expandedSize ?? size;
   await appWindow.setSize(new LogicalSize(enabled ? 560 : Math.min(restored.width, window.screen.availWidth), enabled ? 68 : Math.min(restored.height > 68 ? restored.height : 640, window.screen.availHeight - 48)));
+  if (!enabled && restoreMaximized) { restoreMaximized = false; await appWindow.maximize(); }
 }
 
 export async function applyAutostart(enabled: boolean) {
