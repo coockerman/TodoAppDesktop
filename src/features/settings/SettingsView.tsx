@@ -50,7 +50,7 @@ export function SettingsView({ onShowGuide, onData }: { onShowGuide: () => void;
 
       <div className="settings-layout">
         <section className="settings-card wide">
-          <header><span className="settings-icon"><ShieldCheck size={18} /></span><div><h3>Làm quen với Morrow</h3><p>4 bước ngắn để tạo dự án, nhập việc và dùng checklist quy trình.</p></div></header>
+          <header><span className="settings-icon"><ShieldCheck size={18} /></span><div><h3>Làm quen với Morrow</h3><p>Hướng dẫn theo từng khu vực, kèm ví dụ thao tác.</p></div></header>
           <button className="soft-button" onClick={onShowGuide}>Xem lại hướng dẫn</button>
         </section>
         <section className="settings-card">
@@ -58,6 +58,7 @@ export function SettingsView({ onShowGuide, onData }: { onShowGuide: () => void;
           <div className="theme-options">
             {[{ id: "system", label: "Theo Windows", icon: Laptop }, { id: "light", label: "Sáng", icon: Sun }, { id: "dark", label: "Tối", icon: Moon }].map(({ id, label, icon: Icon }) => <button key={id} className={settings.theme === id ? "selected" : ""} onClick={() => setTheme(id as ThemeMode)}><Icon size={18} /><span>{label}</span></button>)}
           </div>
+          <div className="day-layout-setting"><strong>Bố cục kế hoạch trong ngày</strong><div className="theme-options">{([1, 2] as const).map(columns => <button key={columns} aria-pressed={(settings.dayColumns ?? 1) === columns} className={(settings.dayColumns ?? 1) === columns ? "selected" : ""} onClick={() => updateSettings({ dayColumns: columns })}><span className={`layout-preview preview-${columns}`}><i /><i /></span><span>{columns} cột</span></button>)}</div><p>Hai cột tự thu về một cột khi cửa sổ hẹp.</p></div>
           <div className="font-scale-setting">
             <div className="font-scale-label">
               <span><ALargeSmall size={16} /><strong>Cỡ giao diện</strong></span>

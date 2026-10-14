@@ -22,6 +22,7 @@
         "decorations": false,
         "alwaysOnTop": true,
         "resizable": true,
+        "dragDropEnabled": false,
         "shadow": true
       }
     ],

@@ -30,6 +30,7 @@ const importSchema = z.object({
   auditEvents: z.array(z.unknown()),
   settings: z.object({
     theme: z.enum(["system", "light", "dark"]),
+    dayColumns: z.union([z.literal(1), z.literal(2)]).optional(),
     fontScale: z.number().min(0.85).max(1.3).optional(),
     alwaysOnTop: z.boolean(),
     autostart: z.boolean(),
@@ -176,6 +177,7 @@ function normalizeData(data: AppData): AppData {
     settings: {
       ...data.settings,
       fontScale: data.settings.fontScale ?? 1,
+      dayColumns: data.settings.dayColumns ?? 1,
       exclusiveCompletion: data.settings.exclusiveCompletion ?? false,
       onboardingCompleted: data.settings.onboardingCompleted ?? true,
     },

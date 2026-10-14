@@ -428,3 +428,34 @@ input, textarea, select { outline: none; }
 .image-file-button { position: relative; cursor: pointer; font-size: 11px; }
 .image-file-button input[type="file"] { position: absolute; inset: 0; opacity: 0; width: 100%; height: 100%; cursor: pointer; }
 .image-file-button:focus-within { outline: 2px solid var(--accent); outline-offset: 2px; }
+
+.project-task-list.columns-2 { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); align-content: start; align-items: start; grid-auto-rows: max-content; gap: 12px; }
+.columns-2 .project-group { margin-bottom: 0; min-width: 0; min-height: max-content; container-type: inline-size; container-name: day-project; }
+.columns-2 .task-row { grid-template-columns: minmax(0, 1fr) 78px 105px 47px; gap: 6px; }
+.columns-2 .task-title-input { min-width: 0; }
+.project-heading[draggable] { cursor: grab; }
+.project-heading[draggable]:active, .task-grip:active { cursor: grabbing; }
+.project-drop-target { outline: 2px solid var(--accent); outline-offset: -2px; }
+.day-layout-setting { margin-top: 20px; }
+.layout-preview { display: grid; gap: 3px; width: 40px; height: 26px; }
+.layout-preview i { background: var(--accent-soft); border: 1px solid var(--accent); border-radius: 3px; }
+.preview-2 { grid-template-columns: 1fr 1fr; }
+@container (max-width: 650px) { .project-task-list.columns-2 { grid-template-columns: 1fr; } }
+@container day-project (max-width: 460px) {
+  .columns-2 .task-row { grid-template-columns: minmax(0, 1fr) 105px 47px; }
+  .columns-2 .priority-select { display: none; }
+}
+@container day-project (max-width: 290px) {
+  .columns-2 .task-row { grid-template-columns: minmax(0, 1fr) 90px 47px; gap: 3px; padding-inline: 5px; }
+  .columns-2 .task-status-select { width: 90px; }
+}
+
+.guide-topics { display: flex; flex-wrap: wrap; gap: 6px; padding: 12px 20px; border-bottom: 1px solid var(--border); }
+.guide-topics button { display: flex; align-items: center; gap: 6px; padding: 7px 9px; border-radius: 7px; color: var(--muted); background: var(--surface-soft); font-size: 11px; }
+.guide-topics button[aria-current] { background: var(--accent-soft); color: var(--accent-strong); }
+.guide-topics small { font-weight: 700; }
+.guide-actions { padding-left: 22px; font-size: 13px; line-height: 1.65; }
+.guide-actions li { padding: 4px 0 4px 4px; }
+.guide-actions li::marker { color: var(--accent-strong); font-weight: 700; }
+.guide-layout-demo { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin: 12px 0; }
+.guide-layout-demo span { padding: 12px; border: 1px solid var(--border); border-radius: 6px; line-height: 2; }

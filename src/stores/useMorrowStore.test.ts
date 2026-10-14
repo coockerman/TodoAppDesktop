@@ -70,7 +70,7 @@ describe("Morrow task workflow", () => {
     expect(useMorrowStore.getState().auditEvents.at(-1)?.eventType).toBe("unscheduled");
   });
 
-  it("swaps task order only inside the same project and day", () => {
+  it("reorders tasks only inside the same project and day", () => {
     useMorrowStore.getState().addTask("project-morrow", "Việc thứ nhất", "2026-09-25");
     useMorrowStore.getState().addTask("project-morrow", "Việc thứ hai", "2026-09-25");
     const state = useMorrowStore.getState();
@@ -119,4 +119,12 @@ it("selects exactly one status and clears completion when reopening", () => {
   const task = useMorrowStore.getState().tasks.find(item => item.id === "task-calendar")!;
   expect(task.completedAt).toBeNull();
   expect(task.statuses.filter(value => value.checked).map(value => value.statusId)).toEqual([todo.id]);
+});
+
+it("inserts a project at its target position and keeps intermediate projects", () => {
+  useMorrowStore.getState().addProject("Second", "#ffffff");
+  useMorrowStore.getState().addProject("Third", "#ffffff");
+  const [first, second, third] = useMorrowStore.getState().projects.filter(item => !item.deletedAt).sort((a,b) => a.sortOrder-b.sortOrder);
+  useMorrowStore.getState().reorderProject(first.id, third.id);
+  expect(useMorrowStore.getState().projects.slice().sort((a,b) => a.sortOrder-b.sortOrder).slice(0, 3).map(item => item.id)).toEqual([second.id, third.id, first.id]);
 });

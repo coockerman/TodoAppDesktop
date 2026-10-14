@@ -56,7 +56,7 @@ function TaskRow({ task }: { task: Task }) {
       onDragEnter={(event) => { event.preventDefault(); if (!dragging) setDragOver(true); }}
       onDragOver={(event) => { event.preventDefault(); event.dataTransfer.dropEffect = "move"; if (!dragging) setDragOver(true); }}
       onDragLeave={() => setDragOver(false)}
-      onDrop={(event) => { event.preventDefault(); setDragOver(false); reorderTask(event.dataTransfer.getData("text/plain"), task.id); }}
+      onDrop={(event) => { event.preventDefault(); event.stopPropagation(); setDragOver(false); reorderTask(event.dataTransfer.getData("text/plain"), task.id); }}
     >
       <div className="task-name-wrap">
         <span
@@ -79,7 +79,8 @@ function TaskRow({ task }: { task: Task }) {
 }
 
 export function TaskPanel({ onManageProjects }: { onManageProjects: () => void }) {
-  const { selectedDate, projects, tasks, bulkMoveOpenTasks, scheduleTask } = useMorrowStore();
+  const { selectedDate, projects, tasks, settings, reorderProject, bulkMoveOpenTasks, scheduleTask } = useMorrowStore();
+  const [projectDrop, setProjectDrop] = useState<string | null>(null);
   const [targetDate, setTargetDate] = useState("");
   const [notice, setNotice] = useState("");
   const [projectPickerOpen, setProjectPickerOpen] = useState(false);
@@ -154,13 +155,18 @@ export function TaskPanel({ onManageProjects }: { onManageProjects: () => void }
 
       {dayTasks.length === 0 && activeProjects.length === 0 && <div className="empty-day"><EmptyState icon={ListTodo} title="Một ngày thật nhẹ" body="Tạo dự án đầu tiên rồi thêm công việc bạn muốn hoàn thành." /><button className="primary-button" onClick={onManageProjects}><FolderPlus size={16} />Tạo dự án đầu tiên</button></div>}
 
-      <div className="project-task-list">
+      <div className={`project-task-list columns-${settings.dayColumns ?? 1}`}>
         {activeProjects.map((project) => {
           const projectTasks = dayTasks.filter((task) => task.projectId === project.id).sort((a, b) => a.sortOrder - b.sortOrder);
           if (!projectTasks.length && !revealedProjects.has(project.id)) return null;
           return (
-            <article className="project-group" key={project.id}>
-              <div className="project-heading">
+            <article className={`project-group ${projectDrop === project.id ? "project-drop-target" : ""}`} key={project.id}
+              onDragOver={event => { if (event.dataTransfer.types.includes("application/morrow-project")) { event.preventDefault(); setProjectDrop(project.id); } }}
+              onDragLeave={event => { if (!event.currentTarget.contains(event.relatedTarget as Node)) setProjectDrop(null); }}
+              onDrop={event => { const id = event.dataTransfer.getData("application/morrow-project"); if (id) { event.preventDefault(); reorderProject(id, project.id); } setProjectDrop(null); }}>
+              <div className="project-heading" draggable title="Giữ tên dự án và kéo để đổi vị trí"
+                onDragStart={event => { event.dataTransfer.effectAllowed = "move"; event.dataTransfer.setData("application/morrow-project", project.id); }}
+                onDragEnd={() => setProjectDrop(null)}>
                 <div><span className="project-dot" style={{ background: project.color }} /><strong>{project.name}</strong><small>{projectTasks.length} việc</small></div>
 
               </div>

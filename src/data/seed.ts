@@ -23,6 +23,6 @@ export function createSeedData(): AppData {
     priorities: defaultPriorities.map((item) => ({ ...item })),
     statuses: defaultStatuses.map((item) => ({ ...item })),
     auditEvents: [],
-    settings: { theme: "system", fontScale: 1, alwaysOnTop: true, autostart: false, calendarCollapsed: false, miniMode: false, exclusiveCompletion: false, onboardingCompleted: false },
+    settings: { theme: "system", fontScale: 1, dayColumns: 1, alwaysOnTop: true, autostart: false, calendarCollapsed: false, miniMode: false, exclusiveCompletion: false, onboardingCompleted: false },
   };
 }

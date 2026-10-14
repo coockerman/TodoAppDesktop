@@ -1,6 +1,6 @@
 import { describe, it, expect } from "vitest";
 import { createSeedData } from "../data/seed";
-import { mergeImport, selectExportData } from "./dataTransfer";
+import { mergeImport, mergeProcedures, selectExportData } from "./dataTransfer";
 import { buildExportPayload, parseImport } from "./storage";
 describe("data transfer", () => {
   it("exports only completed tasks with their project and definitions", () => {
@@ -29,4 +29,18 @@ describe("data transfer", () => {
     expect(() => parseImport(JSON.stringify({ ...payload, tasks: [{}] }))).toThrow();
     expect(() => parseImport(JSON.stringify({ ...payload, projects: [] }))).toThrow();
   });
+});
+
+it("exports and imports procedures without changing projects or settings", () => {
+  const current = createSeedData();
+  const incoming = createSeedData();
+  incoming.procedures = [{ id: "flow", name: "Release", steps: [], createdAt: "now", updatedAt: "now", deletedAt: null }];
+  const exported = selectExportData(incoming, "procedures", "");
+  expect(exported.projects).toEqual([]);
+  expect(exported.tasks).toEqual([]);
+  const merged = mergeProcedures(current, parseImport(JSON.stringify(buildExportPayload(exported))));
+  expect(merged.procedures).toEqual(incoming.procedures);
+  expect(merged.projects).toBe(current.projects);
+  expect(merged.settings).toBe(current.settings);
+  expect(mergeProcedures(merged, incoming).procedures).toHaveLength(1);
 });

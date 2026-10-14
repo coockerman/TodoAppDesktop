@@ -11,7 +11,7 @@ beforeEach(() => {
   useMorrowStore.setState({ ...createSeedData(), hydrated: true, hydrate: vi.fn(async () => {}) });
 });
 
-it("shows four illustrated steps and supports back and start", () => {
+it("shows six illustrated steps and supports back and start", () => {
   const start = vi.fn();
   render(<WelcomeGuide onClose={vi.fn()} onStart={start} />);
   expect(screen.getByRole("dialog")).toHaveAccessibleName("Bắt đầu với một dự án");
@@ -22,6 +22,7 @@ it("shows four illustrated steps and supports back and start", () => {
   expect(screen.getByRole("dialog")).toHaveAccessibleName("Bắt đầu với một dự án");
   for (let i = 0; i < 3; i++) fireEvent.click(screen.getByRole("button", { name: "Tiếp tục" }));
   expect(screen.getByRole("img")).toHaveAccessibleName("Minh họa checklist dùng lại với Reset");
+  for (let i = 0; i < 2; i++) fireEvent.click(screen.getByRole("button", { name: "Tiếp tục" }));
   fireEvent.click(screen.getByRole("button", { name: "Bắt đầu" }));
   expect(start).toHaveBeenCalledOnce();
 });

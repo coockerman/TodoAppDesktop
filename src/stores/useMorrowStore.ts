@@ -30,6 +30,7 @@ type AppState = AppData & {
   updateTask: (taskId: string, patch: Partial<Pick<Task, "title" | "notes" | "priorityId">>) => void;
   scheduleTask: (taskId: string, date: string) => void;
   unscheduleTask: (taskId: string) => void;
+  reorderProject: (id: string, targetId: string) => void;
   reorderTask: (taskId: string, targetTaskId: string) => void;
   setTaskStatus: (taskId: string, statusId: string) => void;
   toggleStatus: (taskId: string, statusId: string) => void;
@@ -51,7 +52,7 @@ type AppState = AppData & {
 
 const emptyData: AppData = {
   procedures: [], projects: [], tasks: [], priorities: [], statuses: [], auditEvents: [],
-  settings: { theme: "system", fontScale: 1, alwaysOnTop: true, autostart: false, calendarCollapsed: false, miniMode: false, exclusiveCompletion: false, onboardingCompleted: false },
+  settings: { theme: "system", fontScale: 1, dayColumns: 1, alwaysOnTop: true, autostart: false, calendarCollapsed: false, miniMode: false, exclusiveCompletion: false, onboardingCompleted: false },
 };
 
 const now = () => new Date().toISOString();
@@ -174,13 +175,22 @@ export const useMorrowStore = create<AppState>((set, get) => {
       const before = state.tasks.find((item) => item.id === taskId);
       const target = state.tasks.find((item) => item.id === targetTaskId);
       if (!before || !target || before.deletedAt || target.deletedAt || before.projectId !== target.projectId || before.scheduledDate !== target.scheduledDate) return {};
-      const stamp = now();
-      const after = { ...before, sortOrder: target.sortOrder, updatedAt: stamp };
-      const targetAfter = { ...target, sortOrder: before.sortOrder, updatedAt: stamp };
-      return {
-        tasks: state.tasks.map((item) => item.id === taskId ? after : item.id === targetTaskId ? targetAfter : item),
-        auditEvents: [...state.auditEvents, audit("task", taskId, "reordered", before, after, { targetTaskId })],
-      };
+      const ordered = state.tasks.filter(item => !item.deletedAt && item.projectId === before.projectId && item.scheduledDate === before.scheduledDate).sort((a, b) => a.sortOrder - b.sortOrder);
+      const targetIndex = ordered.findIndex(item => item.id === targetTaskId);
+      ordered.splice(ordered.findIndex(item => item.id === taskId), 1);
+      ordered.splice(targetIndex, 0, before);
+      const ranks = new Map(ordered.map((item, index) => [item.id, index]));
+      return { tasks: state.tasks.map(item => ranks.has(item.id) ? { ...item, sortOrder: ranks.get(item.id)!, updatedAt: now() } : item), auditEvents: [...state.auditEvents, audit("task", taskId, "reordered", before, null, { targetTaskId })] };
+    }),
+    reorderProject: (id, targetId) => commit(state => {
+      const ordered = state.projects.filter(item => !item.deletedAt && !item.archived).sort((a, b) => a.sortOrder - b.sortOrder);
+      const source = ordered.findIndex(item => item.id === id);
+      if (id === targetId || source < 0 || !ordered.some(item => item.id === targetId)) return {};
+      const targetIndex = ordered.findIndex(item => item.id === targetId);
+      const [item] = ordered.splice(source, 1);
+      ordered.splice(targetIndex, 0, item);
+      const ranks = new Map(ordered.map((item, index) => [item.id, index]));
+      return { projects: state.projects.map(item => ranks.has(item.id) ? { ...item, sortOrder: ranks.get(item.id)!, updatedAt: now() } : item), auditEvents: [...state.auditEvents, audit("project", id, "reordered", null, null, { targetId })] };
     }),
     setTaskStatus: (taskId, statusId) => commit(state => {
       const before = state.tasks.find(item => item.id === taskId && !item.deletedAt);
