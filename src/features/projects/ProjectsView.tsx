@@ -44,7 +44,7 @@ function ProjectCard({ project, onOpenBacklog }: { project: Project; onOpenBackl
 }
 
 function BacklogTaskRow({ task, archived, onScheduled }: { task: Task; archived: boolean; onScheduled?: (task: Task) => void }) {
-  const { priorities, updateTask, scheduleTask, deleteTask } = useMorrowStore();
+  const { settings, priorities, updateTask, scheduleTask, deleteTask } = useMorrowStore();
   const [title, setTitle] = useState(task.title);
   useEffect(() => setTitle(task.title), [task.title]);
   const saveTitle = () => {
@@ -59,14 +59,14 @@ function BacklogTaskRow({ task, archived, onScheduled }: { task: Task; archived:
     <div className={`backlog-task ${task.completedAt ? "completed" : ""}`}>
       <div className="backlog-task-main">
         <input value={title} onChange={(event) => setTitle(event.target.value)} onBlur={saveTitle} onKeyDown={(event) => { if (event.key === "Enter") event.currentTarget.blur(); }} aria-label="Tên task backlog" />
-        <select value={task.priorityId} onChange={(event) => updateTask(task.id, { priorityId: event.target.value })} aria-label="Độ ưu tiên">
+        {!settings.hidePriority && <select value={task.priorityId} onChange={(event) => updateTask(task.id, { priorityId: event.target.value })} aria-label="Độ ưu tiên">
           {priorities.filter((item) => !item.deletedAt).sort((a, b) => a.weight - b.weight).map((item) => <option value={item.id} key={item.id}>{item.name}</option>)}
-        </select>
+        </select>}
         <button className="backlog-delete" onClick={() => deleteTask(task.id)} title="Xóa công việc"><Trash2 size={14} /></button>
       </div>
       <div className="backlog-task-footer">
         <TaskStatusSelect task={task} />
-        {!archived && <div className="backlog-schedule"><button onClick={() => schedule(today)}>Hôm nay</button><button onClick={() => schedule(tomorrow)}>Ngày mai</button><input className="backlog-date-input" type="date" min={today} defaultValue="" onChange={(event) => { if (event.target.value) schedule(event.target.value); }} aria-label="Chọn ngày cho công việc" title="Chọn ngày" /></div>}
+        {!archived && !task.completedAt && <div className="backlog-schedule"><button onClick={() => schedule(today)}>Hôm nay</button><button onClick={() => schedule(tomorrow)}>Ngày mai</button><input className="backlog-date-input" type="date" defaultValue="" onChange={(event) => { if (event.target.value) schedule(event.target.value); }} aria-label="Chọn ngày cho công việc" title="Chọn ngày" /></div>}
       </div>
     </div>
   );

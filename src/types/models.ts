@@ -75,6 +75,7 @@ export interface AuditEvent {
 }
 
 export interface AppSettings {
+  hidePriority?: boolean;
   theme: ThemeMode;
   fontScale: number;
   dayColumns?: 1 | 2;

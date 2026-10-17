@@ -9,7 +9,7 @@ import { ProceduresView } from "../features/procedures/ProceduresView";
 import { ProjectsView } from "../features/projects/ProjectsView";
 import { SettingsView } from "../features/settings/SettingsView";
 import { TaskPanel } from "../features/tasks/TaskPanel";
-import { applyAlwaysOnTop, applyMiniMode, startWindowDragging } from "../services/desktop";
+import { applyAlwaysOnTop, applyAutostart, applyMiniMode, startWindowDragging } from "../services/desktop";
 import { useMorrowStore } from "../stores/useMorrowStore";
 import type { AppView } from "../types/models";
 
@@ -32,7 +32,7 @@ function MiniBar() {
     if (event.button === 0 && !(event.target as HTMLElement).closest("button, input, select, textarea")) void startWindowDragging();
   };
   return (
-    <div className="mini-bar" data-tauri-drag-region onMouseDown={drag}>
+    <div className="mini-bar" onMouseDown={drag}>
       <div className="brand-mark small">M</div>
       <strong>Morrow</strong>
       <span className="mini-divider" />
@@ -67,6 +67,7 @@ export default function App() {
       document.body.style.removeProperty("zoom");
     };
   }, [settings.fontScale]);
+  useEffect(() => { if (hydrated && settings.autostart) void applyAutostart(true).catch(error => console.error("Không thể cập nhật đường dẫn khởi động Morrow.", error)); }, [hydrated, settings.autostart]);
   useEffect(() => { if (hydrated) void applyAlwaysOnTop(settings.alwaysOnTop); }, [hydrated, settings.alwaysOnTop]);
   useEffect(() => { if (hydrated) void applyMiniMode(settings.miniMode); }, [hydrated, settings.miniMode]);
 
@@ -85,9 +86,9 @@ export default function App() {
 
   return (
     <>
-    <div className="app-shell" inert={showGuide}>
-      <header className="titlebar" data-tauri-drag-region onMouseDown={drag}>
-        <button className="brand" onClick={() => setView("calendar")}><span className="brand-mark">M</span><span><strong>Morrow</strong><small>Make room for tomorrow</small></span></button>
+    <div className="app-shell">
+      <header className="titlebar" onMouseDown={drag}>
+        <div className="brand" title="Giữ để di chuyển cửa sổ"><span className="brand-mark">M</span><span><strong>Morrow</strong><small>Make room for tomorrow</small></span></div>
         <nav>
           {nav.map(({ id, label, icon: Icon }) => {
             const isActive = view === id;
@@ -119,9 +120,9 @@ export default function App() {
       {view === "data" && <DataView />}
       {view === "settings" && <SettingsView onShowGuide={() => setGuideRequested(true)} onData={() => setView("data")} />}
 
-      <footer className="app-footer"><span><BarChart3 size={13} /> Morrow lưu dữ liệu an toàn trên máy của bạn</span><span>v0.0.1.2 · Local-first</span></footer>
+      <footer className="app-footer"><span><BarChart3 size={13} /> Morrow lưu dữ liệu an toàn trên máy của bạn</span><span>v0.0.1.5 · Local-first</span></footer>
     </div>
-    {showGuide && <WelcomeGuide onClose={closeGuide} onStart={() => { closeGuide(); setView("calendar"); }} />}
+    {showGuide && <WelcomeGuide onNavigate={setView} onClose={closeGuide} onStart={() => { closeGuide(); setView("calendar"); }} />}
     </>
   );
 }

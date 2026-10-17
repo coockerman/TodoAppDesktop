@@ -18,7 +18,7 @@ function formatCompletedAt(value: string) {
 }
 
 export function DashboardView() {
-  const { projects, tasks, priorities, statuses } = useMorrowStore();
+  const { settings, projects, tasks, priorities, statuses } = useMorrowStore();
   const [range, setRange] = useState<Range>("week");
   const [projectId, setProjectId] = useState("all");
   const [query, setQuery] = useState("");
@@ -83,7 +83,7 @@ export function DashboardView() {
                     : <span className="project-dot" style={{ background: project?.color }} />}
                   <div><strong>{task.title}</strong><span>{project?.name}</span></div>
                   <span className="task-progress-label">{getTaskStatus(task, statuses)?.name ?? "Chưa có trạng thái"}</span>
-                  <span className="priority-pill" style={{ color: priority?.color, background: `${priority?.color}18` }}>{priority?.name}</span>
+                  {!settings.hidePriority && <span className="priority-pill" style={{ color: priority?.color, background: `${priority?.color}18` }}>{priority?.name}</span>}
                 </div>;
               })}
             </div>

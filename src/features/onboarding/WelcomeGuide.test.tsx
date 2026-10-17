@@ -11,18 +11,17 @@ beforeEach(() => {
   useMorrowStore.setState({ ...createSeedData(), hydrated: true, hydrate: vi.fn(async () => {}) });
 });
 
-it("shows six illustrated steps and supports back and start", () => {
-  const start = vi.fn();
-  render(<WelcomeGuide onClose={vi.fn()} onStart={start} />);
+it("navigates real app views through seven steps and supports back and start", () => {
+  const start = vi.fn(), navigate = vi.fn();
+  render(<WelcomeGuide onClose={vi.fn()} onStart={start} onNavigate={navigate} />);
   expect(screen.getByRole("dialog")).toHaveAccessibleName("Bắt đầu với một dự án");
-  expect(screen.getByRole("img")).toHaveAccessibleName("Minh họa tạo dự án Game A");
+  expect(navigate).toHaveBeenLastCalledWith("projects");
   fireEvent.click(screen.getByRole("button", { name: "Tiếp tục" }));
-  expect(screen.getByRole("img")).toHaveAccessibleName("Minh họa nhập việc rồi nhấn Enter");
+  expect(navigate).toHaveBeenLastCalledWith("calendar");
   fireEvent.click(screen.getByRole("button", { name: "Quay lại" }));
-  expect(screen.getByRole("dialog")).toHaveAccessibleName("Bắt đầu với một dự án");
-  for (let i = 0; i < 3; i++) fireEvent.click(screen.getByRole("button", { name: "Tiếp tục" }));
-  expect(screen.getByRole("img")).toHaveAccessibleName("Minh họa checklist dùng lại với Reset");
-  for (let i = 0; i < 2; i++) fireEvent.click(screen.getByRole("button", { name: "Tiếp tục" }));
+  expect(navigate).toHaveBeenLastCalledWith("projects");
+  for (let i = 0; i < 6; i++) fireEvent.click(screen.getByRole("button", { name: "Tiếp tục" }));
+  expect(navigate).toHaveBeenLastCalledWith("settings");
   fireEvent.click(screen.getByRole("button", { name: "Bắt đầu" }));
   expect(start).toHaveBeenCalledOnce();
 });

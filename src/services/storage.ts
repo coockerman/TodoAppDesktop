@@ -29,6 +29,7 @@ const importSchema = z.object({
   statuses: z.array(z.object({ ...definitionFields, isCompletionStatus: z.boolean(), isSystem: z.boolean() })),
   auditEvents: z.array(z.unknown()),
   settings: z.object({
+    hidePriority: z.boolean().optional(),
     theme: z.enum(["system", "light", "dark"]),
     dayColumns: z.union([z.literal(1), z.literal(2)]).optional(),
     fontScale: z.number().min(0.85).max(1.3).optional(),

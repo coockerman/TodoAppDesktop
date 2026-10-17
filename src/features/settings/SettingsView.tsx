@@ -6,13 +6,14 @@ import type { ThemeMode } from "../../types/models";
 
 const palette = ["#7667dc", "#4f8bc9", "#65a77a", "#d5a645", "#e47457", "#c24f6f"];
 
-function Toggle({ checked, onChange }: { checked: boolean; onChange: (checked: boolean) => void }) {
-  return <button className={`toggle ${checked ? "on" : ""}`} role="switch" aria-checked={checked} onClick={() => onChange(!checked)}><i /></button>;
+function Toggle({ checked, onChange, disabled = false, label }: { checked: boolean; onChange: (checked: boolean) => void; disabled?: boolean; label?: string }) {
+  return <button className={`toggle ${checked ? "on" : ""}`} role="switch" aria-label={label} disabled={disabled} aria-checked={checked} onClick={() => onChange(!checked)}><i /></button>;
 }
 
 export function SettingsView({ onShowGuide, onData }: { onShowGuide: () => void; onData: () => void }) {
   const store = useMorrowStore();
   const { settings, priorities, statuses, auditEvents, updateSettings, addPriority, updatePriority, deletePriority, addStatus, updateStatus, deleteStatus, clearAuditHistory, purgeDeletedData } = store;
+  const [autostartBusy, setAutostartBusy] = useState(false);
   const [priorityName, setPriorityName] = useState("");
   const [statusName, setStatusName] = useState("");
   const [message, setMessage] = useState("");
@@ -58,6 +59,7 @@ export function SettingsView({ onShowGuide, onData }: { onShowGuide: () => void;
           <div className="theme-options">
             {[{ id: "system", label: "Theo Windows", icon: Laptop }, { id: "light", label: "Sáng", icon: Sun }, { id: "dark", label: "Tối", icon: Moon }].map(({ id, label, icon: Icon }) => <button key={id} className={settings.theme === id ? "selected" : ""} onClick={() => setTheme(id as ThemeMode)}><Icon size={18} /><span>{label}</span></button>)}
           </div>
+          <div className="setting-line"><div><strong>Ẩn độ ưu tiên</strong><span>Thu gọn giao diện trên toàn ứng dụng.</span></div><Toggle checked={!!settings.hidePriority} onChange={(hidePriority) => updateSettings({ hidePriority })} /></div>
           <div className="day-layout-setting"><strong>Bố cục kế hoạch trong ngày</strong><div className="theme-options">{([1, 2] as const).map(columns => <button key={columns} aria-pressed={(settings.dayColumns ?? 1) === columns} className={(settings.dayColumns ?? 1) === columns ? "selected" : ""} onClick={() => updateSettings({ dayColumns: columns })}><span className={`layout-preview preview-${columns}`}><i /><i /></span><span>{columns} cột</span></button>)}</div><p>Hai cột tự thu về một cột khi cửa sổ hẹp.</p></div>
           <div className="font-scale-setting">
             <div className="font-scale-label">
@@ -72,7 +74,10 @@ export function SettingsView({ onShowGuide, onData }: { onShowGuide: () => void;
         <section className="settings-card">
           <header><span className="settings-icon"><Laptop size={18} /></span><div><h3>Hành vi desktop</h3><p>Kiểm soát cách ứng dụng hoạt động trên Windows.</p></div></header>
           <div className="setting-line"><div><strong>Luôn nổi trên màn hình</strong><span>Giữ Morrow phía trên các cửa sổ khác.</span></div><Toggle checked={settings.alwaysOnTop} onChange={(value) => { updateSettings({ alwaysOnTop: value }); void applyAlwaysOnTop(value); }} /></div>
-          <div className="setting-line"><div><strong>Khởi động cùng Windows</strong><span>Mở Morrow tự động sau khi đăng nhập.</span></div><Toggle checked={settings.autostart} onChange={(value) => { updateSettings({ autostart: value }); void applyAutostart(value).catch(() => notify("Không thể thay đổi tự khởi động.")); }} /></div>
+          <div className="setting-line"><div><strong>Khởi động cùng Windows</strong><span>Mở Morrow tự động sau khi đăng nhập.</span></div><Toggle label="Khởi động cùng Windows" checked={settings.autostart} disabled={autostartBusy} onChange={(value) => {
+            setAutostartBusy(true);
+            void applyAutostart(value).then(() => updateSettings({ autostart: value })).catch((error: unknown) => notify(`Không thể thay đổi tự khởi động: ${String(error)}`)).finally(() => setAutostartBusy(false));
+          }} /></div>
         </section>
 
         <section className="settings-card wide">

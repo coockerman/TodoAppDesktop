@@ -160,13 +160,13 @@ export const useMorrowStore = create<AppState>((set, get) => {
     }),
     scheduleTask: (taskId, date) => commit((state) => {
       const before = state.tasks.find((item) => item.id === taskId);
-      if (!before || !date) return {};
+      if (!before || before.completedAt || before.deletedAt || !date || before.scheduledDate === date) return {};
       const after = { ...before, scheduledDate: date, sortOrder: state.tasks.filter((item) => item.scheduledDate === date && !item.deletedAt).length, updatedAt: now() };
       return { tasks: state.tasks.map((item) => item.id === taskId ? after : item), auditEvents: [...state.auditEvents, audit("task", taskId, before.scheduledDate ? "rescheduled" : "scheduled", before, after, { fromDate: before.scheduledDate, toDate: date })] };
     }),
     unscheduleTask: (taskId) => commit((state) => {
       const before = state.tasks.find((item) => item.id === taskId);
-      if (!before || before.scheduledDate === null) return {};
+      if (!before || before.completedAt || before.deletedAt || before.scheduledDate === null) return {};
       const after = { ...before, scheduledDate: null, sortOrder: state.tasks.filter((item) => item.projectId === before.projectId && item.scheduledDate === null && !item.deletedAt).length, updatedAt: now() };
       return { tasks: state.tasks.map((item) => item.id === taskId ? after : item), auditEvents: [...state.auditEvents, audit("task", taskId, "unscheduled", before, after, { fromDate: before.scheduledDate })] };
     }),
@@ -232,7 +232,7 @@ export const useMorrowStore = create<AppState>((set, get) => {
     }),
     bulkMoveOpenTasks: (fromDate, toDate) => {
       const movable = get().tasks.filter((item) => item.scheduledDate === fromDate && !item.completedAt && !item.deletedAt);
-      if (!movable.length || fromDate === toDate) return 0;
+      if (!movable.length || !toDate || fromDate === toDate) return 0;
       const batchId = createId("move");
       commit((state) => {
         const stamp = now();

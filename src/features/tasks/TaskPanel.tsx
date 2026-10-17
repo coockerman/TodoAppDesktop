@@ -4,6 +4,7 @@ import { ArrowRight, CalendarPlus, CalendarX, ChevronDown, CirclePlus, FolderPlu
 import { formatFullDate, parseDateKey } from "../../lib/date";
 import { useMorrowStore } from "../../stores/useMorrowStore";
 import type { Project, Task } from "../../types/models";
+import { MoveTasksDialog } from "./MoveTasksDialog";
 import { EmptyState } from "../../components/EmptyState";
 
 function QuickAdd({ project }: { project: Project }) {
@@ -15,6 +16,7 @@ function QuickAdd({ project }: { project: Project }) {
     addTask(project.id, title);
     setTitle("");
     inputRef.current?.focus();
+    requestAnimationFrame(() => inputRef.current?.closest(".quick-add")?.scrollIntoView?.({ block: "nearest", behavior: "smooth" }));
   };
   return (
     <div className="quick-add">
@@ -36,7 +38,7 @@ function formatCompletedAt(value: string) {
 }
 
 function TaskRow({ task }: { task: Task }) {
-  const { priorities, statuses, reorderTask, updateTask, unscheduleTask, deleteTask } = useMorrowStore();
+  const { settings, priorities, statuses, reorderTask, updateTask, unscheduleTask, deleteTask } = useMorrowStore();
   const [title, setTitle] = useState(task.title);
   const [dragging, setDragging] = useState(false);
   const [dragOver, setDragOver] = useState(false);
@@ -51,7 +53,7 @@ function TaskRow({ task }: { task: Task }) {
   };
   return (
     <div
-      className={`task-row ${task.completedAt ? "completed" : ""} ${dragging ? "dragging" : ""} ${dragOver ? "drag-over" : ""}`}
+      className={`task-row ${settings.hidePriority ? "hide-priority" : ""} ${task.completedAt ? "completed" : ""} ${dragging ? "dragging" : ""} ${dragOver ? "drag-over" : ""}`}
       style={{ "--completion-color": completionStatus?.color ?? "#38c976" } as React.CSSProperties}
       onDragEnter={(event) => { event.preventDefault(); if (!dragging) setDragOver(true); }}
       onDragOver={(event) => { event.preventDefault(); event.dataTransfer.dropEffect = "move"; if (!dragging) setDragOver(true); }}
@@ -69,11 +71,11 @@ function TaskRow({ task }: { task: Task }) {
         ><MoreHorizontal size={15} /></span>
         <input className="task-title-input" value={title} onChange={(event) => setTitle(event.target.value)} onBlur={saveTitle} onKeyDown={(event) => { if (event.key === "Enter") event.currentTarget.blur(); }} aria-label="Tên công việc" title={task.completedAt ? `Hoàn thành lúc ${formatCompletedAt(task.completedAt)}` : undefined} />
       </div>
-      <select className="priority-select" value={task.priorityId} onChange={(event) => updateTask(task.id, { priorityId: event.target.value })} style={{ color: priority?.color }} aria-label="Độ ưu tiên">
+      {!settings.hidePriority && <select className="priority-select" value={task.priorityId} onChange={(event) => updateTask(task.id, { priorityId: event.target.value })} style={{ color: priority?.color }} aria-label="Độ ưu tiên">
         {priorities.filter((item) => !item.deletedAt).sort((a, b) => a.weight - b.weight).map((item) => <option value={item.id} key={item.id} style={{ color: item.color, backgroundColor: "var(--surface)" }}>{item.name}</option>)}
-      </select>
+      </select>}
       <TaskStatusSelect task={task} />
-      <div className="task-actions"><button className="unschedule-task" onClick={() => unscheduleTask(task.id)} title="Đưa về Backlog"><CalendarX size={14} /></button><button className="delete-task" onClick={() => deleteTask(task.id)} title="Xóa công việc"><Trash2 size={15} /></button></div>
+      <div className="task-actions">{!task.completedAt && <button className="unschedule-task" onClick={() => unscheduleTask(task.id)} title="Đưa về Backlog"><CalendarX size={14} /></button>}<button className="delete-task" onClick={() => deleteTask(task.id)} title="Xóa công việc"><Trash2 size={15} /></button></div>
     </div>
   );
 }
@@ -81,6 +83,7 @@ function TaskRow({ task }: { task: Task }) {
 export function TaskPanel({ onManageProjects }: { onManageProjects: () => void }) {
   const { selectedDate, projects, tasks, settings, reorderProject, bulkMoveOpenTasks, scheduleTask } = useMorrowStore();
   const [projectDrop, setProjectDrop] = useState<string | null>(null);
+  const [moveOpen, setMoveOpen] = useState(false);
   const [targetDate, setTargetDate] = useState("");
   const [notice, setNotice] = useState("");
   const [projectPickerOpen, setProjectPickerOpen] = useState(false);
@@ -120,6 +123,7 @@ export function TaskPanel({ onManageProjects }: { onManageProjects: () => void }
 
   return (
     <section className="task-panel">
+      {moveOpen && <MoveTasksDialog onClose={() => setMoveOpen(false)} />}
       <header className="task-panel-header">
         <div>
           <span className="eyebrow">Kế hoạch trong ngày</span>
@@ -187,8 +191,9 @@ export function TaskPanel({ onManageProjects }: { onManageProjects: () => void }
       <footer className="bulk-move-bar">
         <div><strong>{openCount}</strong><span> việc chưa xong</span></div>
         <div className="move-controls">
+          <button className="soft-button" onClick={() => setMoveOpen(true)}>Chuyển việc…</button>
           <span>Chuyển tất cả sang</span>
-          <input type="date" value={targetDate} min={selectedDate} onChange={(event) => setTargetDate(event.target.value)} />
+          <input type="date" value={targetDate} aria-label="Ngày chuyển tất cả" onChange={(event) => setTargetDate(event.target.value)} />
           <button className="soft-button" disabled={!targetDate || openCount === 0} onClick={moveAll}><ArrowRight size={16} /> Chuyển</button>
         </div>
         {notice && <span className="toast-inline">{notice}</span>}

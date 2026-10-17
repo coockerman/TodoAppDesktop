@@ -1,5 +1,5 @@
 import { getCurrentWindow, LogicalSize } from "@tauri-apps/api/window";
-import { disable, enable, isEnabled } from "@tauri-apps/plugin-autostart";
+import { invoke } from "@tauri-apps/api/core";
 
 export const inTauri = () => "__TAURI_INTERNALS__" in window;
 
@@ -26,9 +26,7 @@ export async function applyMiniMode(enabled: boolean) {
 
 export async function applyAutostart(enabled: boolean) {
   if (!inTauri()) return;
-  const active = await isEnabled();
-  if (enabled && !active) await enable();
-  if (!enabled && active) await disable();
+  await invoke("set_windows_autostart", { enabled });
 }
 
 export async function minimizeWindow() {

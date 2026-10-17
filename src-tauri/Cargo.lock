@@ -2109,7 +2109,7 @@ dependencies = [
 
 [[package]]
 name = "morrow"
-version = "0.0.1-2"
+version = "0.0.1-5"
 dependencies = [
  "serde",
  "serde_json",
@@ -2119,6 +2119,7 @@ dependencies = [
  "tauri-plugin-dialog",
  "tauri-plugin-fs",
  "tauri-plugin-sql",
+ "winreg 0.55.0",
 ]
 
 [[package]]

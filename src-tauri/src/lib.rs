@@ -1,3 +1,4 @@
+mod autostart;
 use tauri_plugin_autostart::MacosLauncher;
 use tauri_plugin_sql::{Migration, MigrationKind};
 
@@ -11,6 +12,7 @@ pub fn run() {
     }];
 
     tauri::Builder::default()
+        .invoke_handler(tauri::generate_handler![autostart::set_windows_autostart])
         .plugin(tauri_plugin_dialog::init())
         .plugin(tauri_plugin_fs::init())
         .plugin(tauri_plugin_autostart::init(

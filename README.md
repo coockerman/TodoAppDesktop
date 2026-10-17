@@ -85,3 +85,23 @@ Version hiển thị là `0.0.1.2`; package, Cargo và Tauri dùng SemVer `0.0.1
 - View Dữ liệu có bốn phạm vi xuất JSON, nhập gộp hoặc thay thế với xem trước số lượng.
 - Trong từng quy trình, bật viết nhiều dòng hoặc dán ảnh vào bước (PNG/JPEG/GIF/WebP, tối đa 5 MB mỗi ảnh).
 - Clear account trong Cài đặt yêu cầu xác nhận, xóa dữ liệu và đưa app về trạng thái người dùng mới.
+
+## Bản kiểm thử 0.0.1.3
+
+Version hiển thị là `0.0.1.3`; package, Cargo và Tauri dùng SemVer `0.0.1-3`.
+
+- Thêm cửa sổ chuyển việc theo ngày/dự án, hỗ trợ chuyển về ngày cũ; chặn chuyển ngày và về Backlog cho việc Done.
+- Thêm tùy chọn ẩn ưu tiên toàn app; cài mới mặc định Low / Medium / Hard, giữ bộ ưu tiên của dữ liệu cũ.
+- Tự cuộn khi thêm việc, ô Quy trình tự co giãn tối đa 6 dòng, hướng dẫn tô sáng giao diện trực tiếp và mở rộng vùng kéo cửa sổ.
+
+## Bản kiểm thử 0.0.1.4
+
+- Sửa lớp phủ hướng dẫn: vùng được khoanh giữ nguyên độ sáng, chỉ làm tối vùng xung quanh.
+- Khởi động cùng Windows dùng đường dẫn exe có ngoặc kép, cập nhật lại đường dẫn khi mở bản đã nâng cấp và chỉ lưu công tắc sau khi đăng ký thành công. Chặn đăng ký autostart từ bản debug.
+- Kiểm tra: 39 test frontend và 1 test Rust đạt; đã xem trực quan bước hướng dẫn Quy trình trên Chrome. Chưa kiểm tra đăng xuất/đăng nhập Windows thực tế.
+
+## Bản kiểm thử 0.0.1.5
+
+- Thu gọn thanh trên còn 56px, footer còn 18px; bỏ slogan khỏi thanh trên.
+- Thanh ngày khi ẩn lịch còn 40px, nhãn và ngày nằm cùng hàng; giảm khoảng đệm tiêu đề kế hoạch và thanh chuyển việc.
+- Giữ vùng tên và khoảng trống của thanh trên để kéo cửa sổ. Đã kiểm tra trực quan bố cục lịch thu gọn trên Chrome.

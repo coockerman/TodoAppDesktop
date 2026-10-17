@@ -1,15 +1,24 @@
-import { useRef, useState } from "react";
+import { useLayoutEffect, useRef, useState } from "react";
 import { ArrowDown, ArrowUp, Copy, ListChecks, MoreHorizontal, Plus, RotateCcw, Trash2 } from "lucide-react";
 import { useMorrowStore } from "../../stores/useMorrowStore";
 import { createId } from "../../lib/id";
 import type { Procedure, ProcedureStep } from "../../types/models";
 
+function resizeMultiline(field: HTMLTextAreaElement) {
+  field.style.height = "auto";
+  const style = getComputedStyle(field);
+  const line = parseFloat(style.lineHeight) || 21;
+  const padding = (parseFloat(style.paddingTop) || 0) + (parseFloat(style.paddingBottom) || 0);
+  field.style.height = `${Math.min(Math.max(field.scrollHeight, line + padding), line * 6 + padding)}px`;
+}
 function EditableText({ value, label, onSave, className, multiline = false }: { multiline?: boolean; value: string; label: string; onSave: (value: string) => void; className?: string }) {
   const [draft, setDraft] = useState(value);
   const [previous, setPrevious] = useState(value);
   if (previous !== value) { setPrevious(value); setDraft(value); }
+  const fieldRef = useRef<HTMLInputElement & HTMLTextAreaElement>(null);
+  useLayoutEffect(() => { if (multiline && fieldRef.current) resizeMultiline(fieldRef.current); }, [draft, multiline]);
   const Field = multiline ? "textarea" : "input";
-  return <Field rows={multiline ? 3 : undefined} className={className} value={draft} aria-label={label} onChange={(event) => setDraft(event.target.value)} onBlur={() => {
+  return <Field ref={fieldRef} rows={multiline ? 1 : undefined} className={className} value={draft} aria-label={label} onChange={(event) => setDraft(event.target.value)} onBlur={() => {
     const next = draft.trim();
     if (!next) setDraft(value);
     else if (next !== value) onSave(next);
@@ -27,6 +36,7 @@ export function ProceduresView() {
   const [menuOpen, setMenuOpen] = useState(false);
   const [undo, setUndo] = useState<{ before: Procedure; message: string } | null>(null);
   const stepInput = useRef<HTMLInputElement & HTMLTextAreaElement>(null);
+  useLayoutEffect(() => { if (stepInput.current?.tagName === "TEXTAREA") resizeMultiline(stepInput.current); }, [stepTitle, selectedId, procedures]);
   const active = procedures.filter((item) => !item.deletedAt);
   const selected = active.find((item) => item.id === selectedId) ?? active[0];
   const done = selected?.steps.filter((step) => step.checked).length ?? 0;
@@ -122,7 +132,7 @@ export function ProceduresView() {
           }}><Trash2 size={14} /></button></div>
         </div>)}</div>
         {!selected.steps.length && <p className="procedure-hint">Thêm các bước theo thứ tự bạn thường thực hiện.</p>}
-        <div className="procedure-add-step"><Plus size={17} /><AddField ref={stepInput} value={stepTitle} onChange={(event) => setStepTitle(event.target.value)} placeholder={selected.allowMultiline ? "Viết đoạn văn, Ctrl+Enter để thêm bước…" : "Nhập bước rồi Enter, hoặc dán list nhiều dòng…"} aria-label="Thêm bước quy trình" onKeyDown={(event) => { if (event.key === "Enter" && (!selected.allowMultiline || event.ctrlKey) && !event.nativeEvent.isComposing && event.keyCode !== 229) { event.preventDefault(); addSteps(stepTitle); } }} onPaste={(event) => {
+        <div className="procedure-add-step"><Plus size={17} /><AddField rows={selected.allowMultiline ? 1 : undefined} ref={stepInput} value={stepTitle} onChange={(event) => setStepTitle(event.target.value)} placeholder={selected.allowMultiline ? "Viết đoạn văn, Ctrl+Enter để thêm bước…" : "Nhập bước rồi Enter, hoặc dán list nhiều dòng…"} aria-label="Thêm bước quy trình" onKeyDown={(event) => { if (event.key === "Enter" && (!selected.allowMultiline || event.ctrlKey) && !event.nativeEvent.isComposing && event.keyCode !== 229) { event.preventDefault(); addSteps(stepTitle); } }} onPaste={(event) => {
           if (pasteImages(event)) return;
           const text = event.clipboardData.getData("text");
           if (!selected.allowMultiline && /[\r\n]/.test(text)) { event.preventDefault(); const input = event.currentTarget; addSteps(stepTitle.slice(0, input.selectionStart ?? stepTitle.length) + text + stepTitle.slice(input.selectionEnd ?? stepTitle.length)); }
