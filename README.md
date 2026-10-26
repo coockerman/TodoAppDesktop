@@ -105,3 +105,11 @@ Version hiển thị là `0.0.1.3`; package, Cargo và Tauri dùng SemVer `0.0.1
 - Thu gọn thanh trên còn 56px, footer còn 18px; bỏ slogan khỏi thanh trên.
 - Thanh ngày khi ẩn lịch còn 40px, nhãn và ngày nằm cùng hàng; giảm khoảng đệm tiêu đề kế hoạch và thanh chuyển việc.
 - Giữ vùng tên và khoảng trống của thanh trên để kéo cửa sổ. Đã kiểm tra trực quan bố cục lịch thu gọn trên Chrome.
+
+### Cập nhật dữ liệu và chuyển việc (0.0.1.5)
+
+- Cài mới mặc định tắt khởi động cùng Windows; nâng cấp giữ lựa chọn đã lưu.
+- Xuất và nhập gộp JSON hỗ trợ một ngày/khoảng ngày theo ngày xếp lịch, tùy chọn kèm Backlog và xem trước số lượng. Lọc ngày chỉ nhập dự án/công việc liên quan; sao lưu/khôi phục toàn app luôn giữ đầy đủ mọi ngày.
+- Thiết kế lại xuất/nhập với hai thẻ trên màn rộng, tab chuyển nhanh trên cửa sổ nhỏ; thêm xác nhận trước khi khôi phục toàn bộ.
+- Cửa sổ chuyển việc có ngày đích nổi bật, tìm kiếm, lọc dự án và chọn nhiều việc để chuyển. Việc Done và Backlog vẫn bị loại khỏi danh sách.
+- Bỏ dòng hoàn thành và thanh tiến độ khỏi thẻ dự án.

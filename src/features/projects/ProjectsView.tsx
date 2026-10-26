@@ -14,7 +14,6 @@ function ProjectCard({ project, onOpenBacklog }: { project: Project; onOpenBackl
   const [description, setDescription] = useState(project.description);
   const [customColor, setCustomColor] = useState(project.color);
   const count = tasks.filter((task) => task.projectId === project.id && !task.deletedAt).length;
-  const completedCount = tasks.filter(task => task.projectId === project.id && !task.deletedAt && task.completedAt).length;
   const backlogCount = tasks.filter((task) => task.projectId === project.id && task.scheduledDate === null && !task.deletedAt && !task.completedAt).length;
   const save = () => updateProject(project.id, { name: name.trim() || project.name, description });
   return (
@@ -22,7 +21,6 @@ function ProjectCard({ project, onOpenBacklog }: { project: Project; onOpenBackl
       <div className="project-card-top"><span className="project-avatar"><FolderKanban size={19} /></span><small>{count} công việc</small></div>
       <input className="project-name-input" value={name} onChange={(event) => setName(event.target.value)} onBlur={save} />
       <textarea value={description} onChange={(event) => setDescription(event.target.value)} onBlur={save} placeholder="Mô tả ngắn cho dự án" />
-      <p className="procedure-hint">{completedCount}/{count} hoàn thành · {count ? Math.round(completedCount / count * 100) : 0}%</p><progress max={count || 1} value={completedCount} aria-label={`Tiến độ ${project.name}`} />
       <div className="project-color-row">
         <div className="color-palette">{palette.map((color) => <button className={project.color === color ? "selected" : ""} style={{ background: color }} key={color} onClick={() => { setCustomColor(color); updateProject(project.id, { color }); }} aria-label={`Chọn màu ${color}`} />)}</div>
         <label className="custom-color-control" title="Chọn màu tùy chỉnh">

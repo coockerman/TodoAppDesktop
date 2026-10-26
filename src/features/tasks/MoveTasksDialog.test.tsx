@@ -33,3 +33,19 @@ it("protects Done dates and backlog even when store actions are called directly"
   expect(useMorrowStore.getState().tasks.find(t => t.id === "done")?.scheduledDate).toBe("2026-10-09");
   expect(useMorrowStore.getState().auditEvents).toHaveLength(0);
 });
+
+it("moves only selected visible tasks in a batch and keeps other days unchanged", () => {
+  render(<MoveTasksDialog onClose={() => {}} />);
+  fireEvent.click(screen.getByRole("checkbox", { name: "Chọn Việc cũ" }));
+  fireEvent.click(screen.getByRole("button", { name: "Chuyển 1 việc" }));
+  expect(useMorrowStore.getState().tasks.find(t => t.id === "old")?.scheduledDate).toBe("2026-10-16");
+  expect(useMorrowStore.getState().tasks.find(t => t.id === "future")?.scheduledDate).toBe("2026-10-20");
+  expect(useMorrowStore.getState().tasks.find(t => t.id === "backlog")?.scheduledDate).toBe(null);
+});
+it("does not move hidden selections when searching", () => {
+  render(<MoveTasksDialog onClose={() => {}} />);
+  fireEvent.click(screen.getByRole("checkbox", { name: "Chọn Việc cũ" }));
+  fireEvent.change(screen.getByLabelText("Tìm công việc cần chuyển"), { target: { value: "no match" } });
+  expect(screen.getByRole("button", { name: "Chuyển việc đã chọn" })).toBeDisabled();
+  expect(useMorrowStore.getState().tasks.find(t => t.id === "old")?.scheduledDate).toBe("2026-10-10");
+});

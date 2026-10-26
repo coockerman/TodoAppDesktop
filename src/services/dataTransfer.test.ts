@@ -44,3 +44,27 @@ it("exports and imports procedures without changing projects or settings", () =>
   expect(merged.settings).toBe(current.settings);
   expect(mergeProcedures(merged, incoming).procedures).toHaveLength(1);
 });
+
+it("filters scheduled dates inclusively, optionally includes backlog and keeps valid relationships", () => {
+  const data = createSeedData();
+  const task = data.tasks[1];
+  data.tasks = [
+    { ...task, id: "before", scheduledDate: "2026-10-10" },
+    { ...task, id: "start", scheduledDate: "2026-10-11" },
+    { ...task, id: "end", scheduledDate: "2026-10-13" },
+    { ...task, id: "after", scheduledDate: "2026-10-14" },
+    { ...task, id: "backlog", scheduledDate: null },
+  ];
+  const dates = { from: "2026-10-11", to: "2026-10-13" };
+  const output = selectExportData(data, "projects", "", dates);
+  expect(output.tasks.map(t => t.id)).toEqual(["start", "end"]);
+  expect(parseImport(JSON.stringify(buildExportPayload(output))).tasks).toHaveLength(2);
+  expect(selectExportData(data, "projects", "", { ...dates, includeBacklog: true }).tasks.map(t => t.id)).toEqual(["start", "end", "backlog"]);
+  expect(selectExportData(data, "backup", "", dates)).toBe(data);
+  expect(() => selectExportData(data, "projects", "", { from: "2026-10-15", to: "2026-10-10" })).toThrow();
+});
+it("defaults new installs to disabled Windows startup and preserves that in a backup", () => {
+  const data = createSeedData();
+  expect(data.settings.autostart).toBe(false);
+  expect(parseImport(JSON.stringify(buildExportPayload(data))).settings.autostart).toBe(false);
+});
