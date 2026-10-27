@@ -120,7 +120,7 @@ export default function App() {
       {view === "data" && <DataView />}
       {view === "settings" && <SettingsView onShowGuide={() => setGuideRequested(true)} onData={() => setView("data")} />}
 
-      <footer className="app-footer"><span><BarChart3 size={13} /> Morrow lưu dữ liệu an toàn trên máy của bạn</span><span>v0.0.1.5 · Local-first</span></footer>
+      <footer className="app-footer"><span><BarChart3 size={13} /> Morrow lưu dữ liệu an toàn trên máy của bạn</span><span>v0.0.1.6 · Local-first</span></footer>
     </div>
     {showGuide && <WelcomeGuide onNavigate={setView} onClose={closeGuide} onStart={() => { closeGuide(); setView("calendar"); }} />}
     </>

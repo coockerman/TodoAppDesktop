@@ -1,5 +1,5 @@
 import { TaskStatusSelect } from "../../components/TaskStatusSelect";
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useLayoutEffect, useRef, useState } from "react";
 import { ArrowRight, CalendarPlus, CalendarX, ChevronDown, CirclePlus, FolderPlus, ListTodo, MoreHorizontal, Settings, Trash2, X } from "lucide-react";
 import { formatFullDate, parseDateKey } from "../../lib/date";
 import { useMorrowStore } from "../../stores/useMorrowStore";
@@ -21,7 +21,7 @@ function QuickAdd({ project }: { project: Project }) {
   return (
     <div className="quick-add">
       <CirclePlus size={16} style={{ color: project.color }} />
-      <input ref={inputRef} autoFocus value={title} onChange={(event) => setTitle(event.target.value)} onKeyDown={(event) => { if (event.key === "Enter" && !event.nativeEvent.isComposing && event.keyCode !== 229) { event.preventDefault(); submit(); } }} placeholder="Nhập việc, nhấn Enter để thêm..." aria-label={`Thêm việc vào ${project.name}`} />
+      <input ref={inputRef} value={title} onChange={(event) => setTitle(event.target.value)} onKeyDown={(event) => { if (event.key === "Enter" && !event.nativeEvent.isComposing && event.keyCode !== 229) { event.preventDefault(); submit(); } }} placeholder="Nhập việc, nhấn Enter để thêm..." aria-label={`Thêm việc vào ${project.name}`} />
       {title && <button onClick={submit}>Thêm</button>}
     </div>
   );
@@ -82,6 +82,8 @@ function TaskRow({ task }: { task: Task }) {
 
 export function TaskPanel({ onManageProjects }: { onManageProjects: () => void }) {
   const { selectedDate, projects, tasks, settings, reorderProject, bulkMoveOpenTasks, scheduleTask } = useMorrowStore();
+  const listRef = useRef<HTMLDivElement>(null);
+  useLayoutEffect(() => { if (listRef.current) listRef.current.scrollTop = 0; }, [selectedDate]);
   const [projectDrop, setProjectDrop] = useState<string | null>(null);
   const [moveOpen, setMoveOpen] = useState(false);
   const [targetDate, setTargetDate] = useState("");
@@ -159,7 +161,7 @@ export function TaskPanel({ onManageProjects }: { onManageProjects: () => void }
 
       {dayTasks.length === 0 && activeProjects.length === 0 && <div className="empty-day"><EmptyState icon={ListTodo} title="Một ngày thật nhẹ" body="Tạo dự án đầu tiên rồi thêm công việc bạn muốn hoàn thành." /><button className="primary-button" onClick={onManageProjects}><FolderPlus size={16} />Tạo dự án đầu tiên</button></div>}
 
-      <div className={`project-task-list columns-${settings.dayColumns ?? 1}`}>
+      <div ref={listRef} className={`project-task-list columns-${settings.dayColumns ?? 1}`}>
         {activeProjects.map((project) => {
           const projectTasks = dayTasks.filter((task) => task.projectId === project.id).sort((a, b) => a.sortOrder - b.sortOrder);
           if (!projectTasks.length && !revealedProjects.has(project.id)) return null;

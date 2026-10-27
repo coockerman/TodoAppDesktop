@@ -1,4 +1,4 @@
-import { useLayoutEffect, useRef, useState } from "react";
+import { useEffect, useLayoutEffect, useRef, useState } from "react";
 import { ArrowDown, ArrowUp, Copy, ListChecks, MoreHorizontal, Plus, RotateCcw, Trash2 } from "lucide-react";
 import { useMorrowStore } from "../../stores/useMorrowStore";
 import { createId } from "../../lib/id";
@@ -30,7 +30,9 @@ function EditableText({ value, label, onSave, className, multiline = false }: { 
 
 export function ProceduresView() {
   const { procedures, addProcedure, updateProcedure } = useMorrowStore();
-  const [selectedId, setSelectedId] = useState<string | null>(null);
+  const [selectedId, setSelectedId] = useState<string | null>(() => {
+    try { return localStorage.getItem("morrow:last-procedure"); } catch { return null; }
+  });
   const [name, setName] = useState("");
   const [stepTitle, setStepTitle] = useState("");
   const [menuOpen, setMenuOpen] = useState(false);
@@ -39,6 +41,12 @@ export function ProceduresView() {
   useLayoutEffect(() => { if (stepInput.current?.tagName === "TEXTAREA") resizeMultiline(stepInput.current); }, [stepTitle, selectedId, procedures]);
   const active = procedures.filter((item) => !item.deletedAt);
   const selected = active.find((item) => item.id === selectedId) ?? active[0];
+  useEffect(() => {
+    try {
+      if (selected) localStorage.setItem("morrow:last-procedure", selected.id);
+      else localStorage.removeItem("morrow:last-procedure");
+    } catch { /* Selection remains usable if browser storage is unavailable. */ }
+  }, [selected?.id]);
   const done = selected?.steps.filter((step) => step.checked).length ?? 0;
   const create = () => {
     if (!name.trim()) return;

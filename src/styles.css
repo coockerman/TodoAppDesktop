@@ -541,3 +541,53 @@ input, textarea, select { outline: none; }
   .transfer-mobile-tabs button[aria-pressed="true"] { color: var(--accent-strong); background: var(--surface); box-shadow: 0 1px 4px #0001; }
   .transfer-card:not(.active-pane) { display: none; }
 }
+
+/* Overview: compact metrics, project progress and aligned task metadata. */
+.dashboard-view { max-width: 1600px; width: 100%; margin-inline: auto; }
+.dashboard-view .view-title-row { gap: 20px; flex-wrap: wrap; }
+.dashboard-subtitle { margin: 8px 0 0; color: var(--muted); font-size: var(--content-text); }
+.dashboard-filters { flex-wrap: wrap; }
+.dashboard-filters select:focus-visible, .dashboard-filters input:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+.dashboard-view .metric-grid { gap: 16px; margin-bottom: 28px; }
+.dashboard-view .metric-card { min-height: 132px; padding: 20px 22px; border-radius: 14px; }
+.dashboard-view .metric-card::after { display: none; }
+.dashboard-view .metric-card > span { display: flex; align-items: center; gap: 9px; font-size: var(--content-text); }
+.dashboard-view .metric-card > span svg { color: inherit; }
+.dashboard-view .metric-card strong { margin-block: 14px 7px; font-size: 34px; font-variant-numeric: tabular-nums; }
+.dashboard-view .metric-card small { font-size: var(--content-text-small); }
+.dashboard-section-heading { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-bottom: 12px; }
+.dashboard-section-heading h2 { margin: 0; font-size: 15px; }
+.dashboard-section-heading > span { color: var(--muted); font-size: var(--content-text-small); }
+.dashboard-view .project-progress-grid { grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 12px; margin-bottom: 28px; }
+.dashboard-project-card { min-width: 0; padding: 16px 18px; border: 1px solid var(--border); border-radius: 12px; background: var(--surface); }
+.dashboard-project-card header { display: flex; align-items: center; gap: 9px; }
+.dashboard-project-card header strong { overflow-wrap: anywhere; font-size: var(--content-text); }
+.dashboard-project-card .project-percent { margin-left: auto; color: var(--muted); font-size: var(--content-text-small); font-variant-numeric: tabular-nums; }
+.dashboard-project-card progress { display: block; width: 100%; height: 6px; margin-block: 16px 12px; border: 0; border-radius: 8px; overflow: hidden; appearance: none; background: var(--border); }
+.dashboard-project-card progress::-webkit-progress-bar { background: var(--border); border-radius: 8px; }
+.dashboard-project-card progress::-webkit-progress-value { background: var(--project-color); border-radius: 8px; }
+.dashboard-project-card progress::-moz-progress-bar { background: var(--project-color); border-radius: 8px; }
+.dashboard-project-card footer { display: flex; justify-content: space-between; gap: 10px; color: var(--muted); font-size: var(--content-text-small); }
+.dashboard-view .dashboard-day { grid-template-columns: 88px minmax(0, 1fr); }
+.dashboard-view .dashboard-date { justify-content: flex-start; padding-top: 22px; gap: 5px; background: var(--surface-soft); }
+.dashboard-view .dashboard-date span { font-size: 10px; }
+.dashboard-view .dashboard-day-tasks { min-width: 0; padding: 6px 12px; }
+.dashboard-view .dashboard-task { grid-template-columns: 12px minmax(0, 1fr) minmax(80px, auto) 72px; min-height: 64px; gap: 14px; padding: 12px 10px; border-radius: 0; border-bottom: 1px solid var(--border); }
+.dashboard-view .dashboard-task:last-child { border-bottom: 0; }
+.dashboard-view .dashboard-task.without-priority { grid-template-columns: 12px minmax(0, 1fr) minmax(80px, auto); }
+.dashboard-view .dashboard-task > div { min-width: 0; gap: 5px; }
+.dashboard-view .dashboard-task strong { overflow-wrap: anywhere; line-height: 1.5; }
+.dashboard-view .task-progress-label { justify-self: end; padding: 5px 9px; border: 1px solid var(--border); border-radius: 6px; font-size: var(--content-text-small); }
+.dashboard-view .priority-pill { justify-self: end; }
+@media (max-width: 650px) {
+  .dashboard-view .dashboard-filters { width: 100%; }
+  .dashboard-view .search-box { display: flex; flex: 1; min-width: 140px; }
+  .dashboard-view .metric-grid { grid-template-columns: 1fr; gap: 10px; }
+  .dashboard-view .metric-card { min-height: 112px; padding: 16px; }
+  .dashboard-view .metric-card:last-child { grid-column: auto; }
+  .dashboard-view .project-progress-grid { grid-template-columns: 1fr; }
+  .dashboard-view .dashboard-day { grid-template-columns: 58px minmax(0, 1fr); }
+  .dashboard-view .dashboard-task { grid-template-columns: 12px minmax(0, 1fr) auto; gap: 8px; }
+  .dashboard-view .dashboard-task .priority-pill { grid-column: 2; justify-self: start; }
+  .dashboard-view .dashboard-date span { font-size: 8px; }
+}

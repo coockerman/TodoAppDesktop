@@ -35,3 +35,18 @@ describe("Calendar continuous entry", () => {
     expect(input).toHaveValue("Việc mới");
   });
 });
+
+it("opens the daily plan without focusing the last project and starts at the top when reopened", () => {
+  const project = useMorrowStore.getState().projects[0];
+  useMorrowStore.getState().addTask(project.id, "Task");
+  const view = render(<TaskPanel onManageProjects={() => {}} />);
+  const input = screen.getByRole("textbox", { name: `Thêm việc vào ${project.name}` });
+  expect(input).not.toHaveFocus();
+  const list = view.container.querySelector(".project-task-list")!;
+  list.scrollTop = 450;
+  fireEvent.click(screen.getByRole("button", { name: "Thêm dự án" }));
+  expect(list.scrollTop).toBe(450);
+  cleanup();
+  const reopened = render(<TaskPanel onManageProjects={() => {}} />);
+  expect(reopened.container.querySelector(".project-task-list")!.scrollTop).toBe(0);
+});

@@ -5,7 +5,7 @@ import { useMorrowStore } from "../../stores/useMorrowStore";
 import { ProceduresView } from "./ProceduresView";
 
 afterEach(cleanup);
-beforeEach(() => useMorrowStore.setState({ ...createSeedData(), hydrated: true }));
+beforeEach(() => { localStorage.removeItem("morrow:last-procedure"); useMorrowStore.setState({ ...createSeedData(), hydrated: true }); });
 
 it("creates, pastes, reorders, edits, ticks, resets, duplicates and restores a deleted procedure", () => {
   render(<ProceduresView />);
@@ -76,4 +76,19 @@ it("shows a useful error for unsupported images without modifying the step", asy
   fireEvent.change(screen.getByLabelText("Thêm bước từ ảnh"), { target: { files: [new File(["bad"], "bad.bmp", { type: "image/bmp" })] } });
   await waitFor(() => expect(screen.getByRole("alert")).toHaveTextContent("PNG"));
   expect(useMorrowStore.getState().procedures[0].steps).toHaveLength(0);
+});
+
+it("restores the last procedure after remount and falls back if it was deleted", () => {
+  const first = useMorrowStore.getState().addProcedure("First");
+  const second = useMorrowStore.getState().addProcedure("Second");
+  const view = render(<ProceduresView />);
+  fireEvent.click(screen.getByRole("button", { name: /Second/ }));
+  view.unmount();
+  const reopened = render(<ProceduresView />);
+  expect(screen.getByLabelText("Tên bộ quy trình")).toHaveValue("Second");
+  reopened.unmount();
+  useMorrowStore.getState().updateProcedure(second, { deletedAt: new Date().toISOString() });
+  render(<ProceduresView />);
+  expect(screen.getByLabelText("Tên bộ quy trình")).toHaveValue("First");
+  expect(localStorage.getItem("morrow:last-procedure")).toBe(first);
 });

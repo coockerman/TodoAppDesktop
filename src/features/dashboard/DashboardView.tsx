@@ -1,7 +1,7 @@
 import { getTaskStatus } from "../../lib/taskStatus";
 import { useMemo, useState } from "react";
 import { endOfMonth, endOfWeek, format, isBefore, parseISO, startOfMonth, startOfToday, startOfWeek } from "date-fns";
-import { CalendarDays, Check, Search, SlidersHorizontal } from "lucide-react";
+import { CalendarDays, Check, Search, SlidersHorizontal, ListTodo, CircleCheck, Clock3 } from "lucide-react";
 import { useMorrowStore } from "../../stores/useMorrowStore";
 import type { Task } from "../../types/models";
 
@@ -48,7 +48,7 @@ export function DashboardView() {
   return (
     <main className="large-view dashboard-view">
       <div className="view-title-row">
-        <div><span className="eyebrow">Bức tranh toàn cảnh</span><h1>Tổng quan công việc</h1></div>
+        <div><span className="eyebrow">Bức tranh toàn cảnh</span><h1>Tổng quan công việc</h1><p className="dashboard-subtitle">Theo dõi tiến độ, nắm rõ việc cần làm.</p></div>
         <div className="dashboard-filters">
           <select value={range} onChange={(event) => setRange(event.target.value as Range)}><option value="week">Tuần này</option><option value="month">Tháng này</option><option value="all">Tất cả đã xếp lịch</option><option value="backlog">Chưa xếp lịch</option></select>
           <select value={projectId} onChange={(event) => setProjectId(event.target.value)}><option value="all">Mọi dự án</option>{projects.filter((item) => !item.deletedAt).map((item) => <option value={item.id} key={item.id}>{item.name}</option>)}</select>
@@ -57,17 +57,24 @@ export function DashboardView() {
       </div>
 
       <div className="metric-grid">
-        <div className="metric-card violet"><span>Tổng công việc</span><strong>{visible.length}</strong><small>trong khoảng đã chọn</small></div>
-        <div className="metric-card green"><span>Đã hoàn thành</span><strong>{done}</strong><small>{visible.length ? Math.round(done / visible.length * 100) : 0}% tiến độ</small></div>
-        <div className="metric-card coral"><span>Đang quá hạn</span><strong>{overdue}</strong><small>cần được chú ý</small></div>
+        <div className="metric-card violet"><span><ListTodo size={17} />Tổng công việc</span><strong>{visible.length}</strong><small>trong khoảng đã chọn</small></div>
+        <div className="metric-card green"><span><CircleCheck size={17} />Đã hoàn thành</span><strong>{done}</strong><small>{visible.length ? Math.round(done / visible.length * 100) : 0}% tiến độ</small></div>
+        <div className="metric-card coral"><span><Clock3 size={17} />Đang quá hạn</span><strong>{overdue}</strong><small>cần được chú ý</small></div>
       </div>
 
-      <section className="project-progress-grid">{projects.filter(project => !project.deletedAt && (projectId === "all" || project.id === projectId)).map(project => {
-        const items = visible.filter(task => task.projectId === project.id);
-        const completed = items.filter(task => task.completedAt).length;
-        const percent = items.length ? Math.round(completed / items.length * 100) : 0;
-        return <article className="settings-card" key={project.id}><strong>{project.name}</strong><p>{completed}/{items.length} hoàn thành · {percent}%</p><progress max="100" value={percent} aria-label={`Tiến độ ${project.name}`} /><p>{items.length - completed} việc còn lại trong bộ lọc</p></article>;
-      })}</section>
+      <section className="dashboard-projects" aria-label="Tiến độ dự án">
+        <div className="dashboard-section-heading"><h2>Tiến độ dự án</h2><span>Trong bộ lọc đã chọn</span></div>
+        <div className="project-progress-grid">{projects.filter(project => !project.deletedAt && (projectId === "all" || project.id === projectId)).map(project => {
+          const items = visible.filter(task => task.projectId === project.id);
+          const completed = items.filter(task => task.completedAt).length;
+          const percent = items.length ? Math.round(completed / items.length * 100) : 0;
+          return <article className="dashboard-project-card" key={project.id} style={{ "--project-color": project.color } as React.CSSProperties}>
+            <header><span className="project-dot" style={{ background: project.color }} /><strong>{project.name}</strong><span className="project-percent">{percent}%</span></header>
+            <progress max="100" value={percent} aria-label={`Tiến độ ${project.name}`} />
+            <footer><span>{completed}/{items.length} hoàn thành</span><span>{items.length ? `${items.length - completed} còn lại` : "Chưa có việc"}</span></footer>
+          </article>;
+        })}</div>
+      </section>
       <section className="dashboard-list">
         <div className="section-title"><div><SlidersHorizontal size={17} /><strong>Danh sách theo ngày</strong></div><span>{visible.length} kết quả</span></div>
         {[...groups.entries()].map(([date, dayTasks]) => (
@@ -77,12 +84,12 @@ export function DashboardView() {
               {dayTasks.map((task) => {
                 const project = projects.find((item) => item.id === task.projectId);
                 const priority = priorities.find((item) => item.id === task.priorityId);
-                return <div className={`dashboard-task ${task.completedAt ? "completed" : ""}`} key={task.id}>
+                return <div className={`dashboard-task ${settings.hidePriority ? "without-priority" : ""} ${task.completedAt ? "completed" : ""}`} key={task.id}>
                   {task.completedAt
                     ? <span className="completion-mark has-completion-tooltip" tabIndex={0} aria-label={`Hoàn thành lúc ${formatCompletedAt(task.completedAt)}`} data-completed-label={`Hoàn thành lúc ${formatCompletedAt(task.completedAt)}`}><Check size={11} strokeWidth={3} /></span>
                     : <span className="project-dot" style={{ background: project?.color }} />}
                   <div><strong>{task.title}</strong><span>{project?.name}</span></div>
-                  <span className="task-progress-label">{getTaskStatus(task, statuses)?.name ?? "Chưa có trạng thái"}</span>
+                  <span className="task-progress-label" style={{ color: getTaskStatus(task, statuses)?.color }}>{getTaskStatus(task, statuses)?.name ?? "Chưa có trạng thái"}</span>
                   {!settings.hidePriority && <span className="priority-pill" style={{ color: priority?.color, background: `${priority?.color}18` }}>{priority?.name}</span>}
                 </div>;
               })}
